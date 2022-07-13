@@ -241,7 +241,7 @@ class Application(tkinter.Tk):
         self.mainloop()
 
 def main():
-    parser = argparse.ArgumentParser(description='Image viewer')
+    parser = argparse.ArgumentParser(description='An Image viewer.')
 
     parser.add_argument('--path', type=str, help='Path to the directory containing the images.', default='./images')
     parser.add_argument('--width', type=int, help='Width of the window. Defaults to 720. Images are resized according to this argument.', default=720)

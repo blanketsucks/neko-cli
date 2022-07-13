@@ -19,8 +19,8 @@ python3 -m pip install git+https://github.com/blanketsucks/neko.git
 ## Usage
 
 ```bash
-usage: neko [-h] [-t TYPE] [-a AMOUNT] [-p PATH] [--provider {akaneko,nekobot,hmtai,waifu.pics,waifu.im,reddit}] [--retry-if-exists]
-            [--max-retries MAX_RETRIES] [--extras EXTRAS] [--view]
+usage: neko-cli [-h] [-t TYPE] [-a AMOUNT] [-p PATH] [--provider {akaneko,nekobot,hmtai,waifu.pics,waifu.im,reddit}] [--retry-if-exists]
+                [--max-retries MAX_RETRIES] [--extras EXTRAS] [--view]
 
 Download NSFW and SFW from various providers.
 
@@ -35,9 +35,23 @@ optional arguments:
   --retry-if-exists     Retry the request if the file already exists. Defaults to False
   --max-retries MAX_RETRIES
                         The maximum amount of consecutive retries or `none`. Defaults to `none`
-  --extras EXTRAS       Extra arguments to be passed to the provider. Should be a file path to a JSON file. Currently the only provider that uses
-                        this information is reddit.
-  ```
+  --extras EXTRAS       Extra arguments to be passed to the provider. Should be a file path to a JSON file. Currently the only provider that uses this information is reddit.
+  --view                View the images after downloading.
+```
+
+The library also provides a tool for viewing files which is based on `tkinter`
+
+```bash
+usage: neko-viewer [-h] [--path PATH] [--width WIDTH] [--height HEIGHT]
+
+An Image viewer.
+
+optional arguments:
+  -h, --help       show this help message and exit
+  --path PATH      Path to the directory containing the images.
+  --width WIDTH    Width of the window. Defaults to 720. Images are resized according to this argument.
+  --height HEIGHT  Height of the window. Defaults to 720. Images are resized according to this argument.
+```
 
 ## Library Usage
 

@@ -21,15 +21,6 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument('--extras', type=argparse.FileType('r'), help='''
     Extra arguments to be passed to the provider. Should be a file path to a JSON file.
     Currently the only provider that uses this information is reddit.
-
-    The file format for reddit should be something like this:
-    `{
-        "subreddit": "aww",
-        "sort": "top"
-    }`.
-
-    The `subreddit` key is required and the `sort` key is optional.
-    Any other key value pairs provided will be passed in as extra parameters during the request.
     ''', required=False)
     parser.add_argument('--view', action='store_true', help='View the images after downloading.')
 
