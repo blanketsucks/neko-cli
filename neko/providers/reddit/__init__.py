@@ -32,7 +32,7 @@ class RedditProvider(Provider):
         if self.sort not in ('hot', 'new', 'rising', 'top', 'controversial'):
             error('`sort` must be one of "hot", "new", "rising", "top" or "controversial".')
 
-        self.session.headers['User-Agent'] = USER_AGENT
+        self.session.headers['User-Agent'] = extras.pop('user_agent', USER_AGENT)
         self.last: Optional[str] = None
 
         self._cache: List[RedditImage] = []
@@ -74,8 +74,9 @@ class RedditProvider(Provider):
 
                 if post.get('is_gallery', False):
                     images += await self.fetch_gallery(post['url'], post['name'])
-                
-                images.append(RedditImage(post['url'], post['name']))
+                else:
+                    images.append(RedditImage(post['url'], post['name']))
+
                 self.last = post['name']
 
             return images
