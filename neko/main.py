@@ -10,7 +10,7 @@ from .utils import Colors, get_input
 from .viewer import Application as ImageViewer
 
 def create_argument_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog='neko', description='Download NSFW and SFW from various providers.')
+    parser = argparse.ArgumentParser(prog='neko-cli', description='Download NSFW and SFW from various providers.')
 
     parser.add_argument('-t', '--type', type=str, help='The category to download.', required=False)
     parser.add_argument('-a', '--amount', type=str, help='The amount of images to download.', required=False)
@@ -67,7 +67,7 @@ async def main():
             await session.close()
             return 0
 
-        print()
+        print('\n')
 
     if args.type == 'check':
         if not categories:
@@ -102,7 +102,7 @@ async def main():
             await session.close()
             return 0
 
-        print()
+        print('\n')
 
     i = 0
     success = 0

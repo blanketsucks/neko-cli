@@ -7,17 +7,20 @@ import asyncio
 from .utils import Colors
 
 class Downloader:
-    __slots__ = ('session', 'url', 'path')
+    __slots__ = ('session', 'url', 'path', 'debug')
 
     def __init__(
         self, 
         session: aiohttp.ClientSession, 
         url: str,
-        path: pathlib.Path
+        path: pathlib.Path,
+        *,
+        debug: bool = True
     ) -> None:
         self.session = session
         self.url = url
         self.path = path
+        self.debug = debug
 
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
@@ -48,8 +51,9 @@ class Downloader:
         file.flush()
         file.close()
 
-        fmt = f"{Colors.white}- {path.name}{Colors.reset}: {Colors.green}Successfully Downloaded.{Colors.reset}"
-        print(fmt)
+        if self.debug:
+            fmt = f"{Colors.white}- {path.name}{Colors.reset}: {Colors.green}Successfully Downloaded.{Colors.reset}"
+            print(fmt)
 
     async def fetch_download_path(self, ident: str) -> pathlib.Path:
         headers = await self.fetch_headers()
@@ -68,8 +72,9 @@ class Downloader:
     async def download(self, ident: str) -> bool:
         async with self.session.get(self.url) as response:
             if response.status != 200:
-                fmt = f"{Colors.white}- {ident}{Colors.reset}: {Colors.red}Failed to download with status code '{response.status}'.{Colors.reset}"
-                print(fmt)
+                if self.debug:
+                    fmt = f"{Colors.white}- {ident}{Colors.reset}: {Colors.red}Failed to download with status code '{response.status}'.{Colors.reset}"
+                    print(fmt)
 
                 return False
 
@@ -80,8 +85,9 @@ class Downloader:
                 path = self.path / ident
 
             if path.suffix not in ('.jpg', '.jpeg', '.png', '.gif'):
-                fmt = f"{Colors.white}- {ident}{Colors.reset}: {Colors.red}Unsupported file type '{path.suffix}'.{Colors.reset}"
-                print(fmt)
+                if self.debug:
+                    fmt = f"{Colors.white}- {ident}{Colors.reset}: {Colors.red}Unsupported file type '{path.suffix}'.{Colors.reset}"
+                    print(fmt)
 
                 return False
 

@@ -1,4 +1,4 @@
-from typing import Dict, Type
+from typing import Dict, Type, Optional
 
 from .abc import Provider
 
@@ -20,3 +20,6 @@ ALL_PROVIDERS: Dict[str, Type[Provider]] = {
 
 def add_provider(name: str, provider: Type[Provider]):
     ALL_PROVIDERS[name] = provider
+
+def get_provider(name: str) -> Optional[Type[Provider]]:
+    return ALL_PROVIDERS.get(name)
