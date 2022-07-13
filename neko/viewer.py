@@ -12,8 +12,6 @@ import tkinter
 import pathlib
 import math
 
-# ImageFile.LOAD_TRUNCATED_IMAGES = True
-
 def get_frames(image: Image.Image) -> Iterator[Image.Image]:
     for frame in ImageSequence.Iterator(image):
         yield frame
@@ -246,12 +244,16 @@ class Application(tkinter.Tk):
 
 def main():
     parser = argparse.ArgumentParser(description='Image viewer')
+
     parser.add_argument('--path', type=str, help='Path to the directory containing the images.', default='./images')
+    parser.add_argument('--width', type=int, help='Width of the window. Defaults to 720. Images are resized according to this argument.', default=720)
+    parser.add_argument('--height', type=int, help='Height of the window. Defaults to 720. Images are resized according to this argument.', default=720)
 
     args = parser.parse_args()
-    app = Application(width=720, height=720, paths=[args.path])
+    app = Application(width=args.width, height=args.height, paths=[args.path])
 
     app.run()
+    return 0
 
 if __name__ == '__main__':
     exit(main())

@@ -16,7 +16,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument('-a', '--amount', type=str, help='The amount of images to download.', required=False)
     parser.add_argument('-p', '--path', type=str, help='The path where to save the images. Defaults to `./images`', default='./images')
     parser.add_argument('--provider', type=str, help='The provider to use. Defaults to `nekobot`.', default='nekobot', choices=ALL_PROVIDERS.keys())
-    parser.add_argument('--retry-if-exists', action='store_true', help='Retry the request if the file already exists')
+    parser.add_argument('--retry-if-exists', action='store_true', help='Retry the request if the file already exists. Defaults to False', default=False)
     parser.add_argument('--max-retries', type=str, help='The maximum amount of consecutive retries or `none`. Defaults to `none`', default='none')
     parser.add_argument('--extras', type=argparse.FileType('r'), help='''
     Extra arguments to be passed to the provider. Should be a file path to a JSON file.
@@ -56,10 +56,16 @@ async def main():
     session = aiohttp.ClientSession()
     provider = ALL_PROVIDERS[args.provider](session, args.extras)
 
+    print(f'{Colors.white}- Provider used{Colors.reset}: {Colors.green}{args.provider!r}{Colors.reset}\n')
+
     categories = await provider.fetch_categories()
     if args.type is None and categories:
         args.type = get_input('{white}- Please enter the category you want to download (You can also type `check` to see all the available categories){reset}: {green}')
-        print(Colors.reset.value)
+        if args.type in ('q', 'quit', 'exit'):
+            print(Colors.reset.value)
+
+            await session.close()
+            return 0
 
     if args.type == 'check':
         if not categories:
@@ -88,7 +94,11 @@ async def main():
 
     if args.amount is None:
         args.amount = get_input('{white}- Please enter the amount of images you want to download (You can also type `all` to download all the images){reset}: {green}')
-        print(Colors.reset.value)
+        if args.amount in ('q', 'quit', 'exit'):
+            print(Colors.reset.value)
+
+            await session.close()
+            return 0
 
     i = 0
     success = 0

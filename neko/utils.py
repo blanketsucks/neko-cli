@@ -9,12 +9,7 @@ class Colors(str, Enum):
     reset = '\u001b[0m'
 
 def get_input(prompt: str) -> str:
-    inp = input(prompt.format_map(Colors.__members__))
-    if inp in ('q', 'quit', 'exit'):
-        print(Colors.reset.value)
-        exit(0)
-
-    return inp
+    return input(prompt.format_map(Colors.__members__))
 
 def error(msg: str) -> NoReturn:
     print(f'{Colors.red}- {msg}{Colors.reset}')

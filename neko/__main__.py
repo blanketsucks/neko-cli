@@ -1,9 +1,9 @@
 import asyncio
 
-from .main import main
+from .main import main as amain
+
+def main() -> int:
+    return asyncio.run(amain())
 
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    code = loop.run_until_complete(main())
-
-    exit(code)
+    exit(main())
