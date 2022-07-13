@@ -40,17 +40,7 @@ class RedditProvider(Provider):
     def get_cached_images(self) -> List[RedditImage]:
         return self._cache.copy()
 
-    async def fetch_image(self, type: str) -> str:
-        if not self._cache:
-            # Cache the responses to avoid API calls
-            self._cache = await self._fetch_many(type)
-
-        image, name = self._cache.pop()
-        self.last = name
-
-        return image
-
-    async def _fetch_many(self, _: str) -> List[RedditImage]:
+    async def _fetch_many(self) -> List[RedditImage]:
         params: Dict[str, Any] = {'limit': 30, **self.extras}
         if self.last:
             params['after'] = self.last
@@ -61,7 +51,7 @@ class RedditProvider(Provider):
                 print(f'{Colors.red}- Too many requests. Retrying in {retry_after} seconds.{Colors.reset}')
 
                 await asyncio.sleep(retry_after)
-                return await self._fetch_many(_)
+                return await self._fetch_many()
             
             data = await response.json()
 
@@ -73,7 +63,7 @@ class RedditProvider(Provider):
                     continue
 
                 if post.get('is_gallery', False):
-                    images += await self.fetch_gallery(post['url'], post['name'])
+                    images += await self._fetch_gallery_items(post['url'], post['name'])
                 else:
                     images.append(RedditImage(post['url'], post['name']))
 
@@ -81,11 +71,7 @@ class RedditProvider(Provider):
 
             return images
 
-    async def fetch_many(self, type: str) -> List[str]:
-        images = await self._fetch_many(type)
-        return [image.url for image in images]
-
-    async def fetch_gallery(self, url: str, name: str) -> List[RedditImage]:
+    async def _fetch_gallery_items(self, url: str, name: str) -> List[RedditImage]:
         new_url = url.replace('gallery', 'comments') + '.json'
         async with self.session.get(new_url) as response:
             data = await response.json()
@@ -98,6 +84,20 @@ class RedditProvider(Provider):
                 images.append(RedditImage(f'https://i.redd.it/{id}.{extension}', name))
 
             return images
+
+    async def fetch_image(self, _: str) -> str:
+        if not self._cache:
+            # Cache the responses to avoid API calls
+            self._cache = await self._fetch_many()
+
+        image, name = self._cache.pop()
+        self.last = name
+
+        return image
+
+    async def fetch_many(self, _: str) -> List[str]:
+        images = await self._fetch_many()
+        return [image.url for image in images]
 
     async def fetch_categories(self) -> Dict[str, int]:
         return {}
