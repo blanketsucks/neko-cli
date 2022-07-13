@@ -21,11 +21,11 @@ class Colors(str, Enum):
 # From https://stackoverflow.com/a/43770948
 class ImageLabel(tkinter.Label):
     def load(self, image: Image.Image, width: int, height: int):
-        self.loc = 0
-        self.frames = []
+        self.location = 0
+        self.frames: List[ImageTk.PhotoImage] = []
         self.width = width
         self.height = height
-        self.after_id = None
+        self.after_id: Optional[str] = None
 
         try:
             for frame in count(1):
@@ -52,9 +52,12 @@ class ImageLabel(tkinter.Label):
 
     def next_frame(self):
         if self.frames:
-            self.loc += 1
-            self.loc %= len(self.frames)
-            self.config(image=self.frames[self.loc], width=self.width, height=self.height, anchor='center')
+            self.location += 1
+            self.location %= len(self.frames)
+
+            frame = self.frames[self.location]
+            self.config(image=frame, width=self.width, height=self.height, anchor='center')
+            
             self.after_id = self.after(self.delay, self.next_frame)
 
 class Application(tkinter.Tk):

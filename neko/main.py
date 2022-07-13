@@ -67,6 +67,8 @@ async def main():
             await session.close()
             return 0
 
+        print()
+
     if args.type == 'check':
         if not categories:
             print(f'{Colors.white}- There are no categories available with this provider.{Colors.reset}')
@@ -99,6 +101,8 @@ async def main():
 
             await session.close()
             return 0
+
+        print()
 
     i = 0
     success = 0
