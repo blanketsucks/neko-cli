@@ -42,4 +42,5 @@ optional arguments:
 ## Library Usage
 
 Examples can be found in the [`examples`](https://github.com/blanketsucks/neko/tree/master/examples) directory.
+
 Note that when importing the library, you would need to import `neko`.
