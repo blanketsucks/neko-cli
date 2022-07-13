@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Iterator, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from PIL import Image, ImageTk, UnidentifiedImageError, ImageSequence
 from tkinter import simpledialog
@@ -11,10 +11,6 @@ import random
 import tkinter
 import pathlib
 import math
-
-def get_frames(image: Image.Image) -> Iterator[Image.Image]:
-    for frame in ImageSequence.Iterator(image):
-        yield frame
 
 class Colors(str, Enum):
     red = '\u001b[1;31m'
@@ -82,7 +78,6 @@ class Application(tkinter.Tk):
 
         self.duration = duration
         self.index = -1
-        self.frames = 1
         self.slideshow: Optional[str] = None
         self.current_image: Optional[Image.Image] = None
 
@@ -169,7 +164,7 @@ class Application(tkinter.Tk):
 
         print(f'{Colors.white}- {name}{Colors.reset}: {Colors.green}Resized to {width}x{height}.{Colors.reset}')
         if image.format == 'GIF':
-            for frame in get_frames(image):
+            for frame in ImageSequence.Iterator(image):
                 frame.resize((width, height))
             
             return image
