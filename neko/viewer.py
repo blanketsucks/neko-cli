@@ -182,7 +182,7 @@ class Application(tkinter.Tk):
         self.slide.unload()
         self.set_image(image)
 
-        self.title(name + f' | ({self.index + 1}/{len(self.images)})')
+        self.title(f'{name} | ({self.index + 1}/{len(self.images)})')
 
     def next(self, *args: Any) -> None:
         self.index += 1
