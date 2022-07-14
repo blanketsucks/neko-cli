@@ -20,6 +20,5 @@ class WaifuimProvider(Provider):
         return [image['url'] for image in data['images']]
 
     async def fetch_categories(self) -> Dict[str, int]:
-        async with self.session.get(self.BASE_URL + 'tags', params={'full': 'on'}) as response:
-            data = await response.json()
-            return {tag['name']: -1 for tag in data['nsfw']}
+        data = await self.request('tags', params={'full': 'on'})
+        return {tag['name']: -1 for tag in data['nsfw']}

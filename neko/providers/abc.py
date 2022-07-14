@@ -47,6 +47,9 @@ class Provider(ABC):
 
             return await response.json()
 
+        return {}
+
+
     @abstractmethod
     async def fetch_image(self, type: str) -> str:
         """

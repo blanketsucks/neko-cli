@@ -1,10 +1,9 @@
-from typing import List, Dict, Any, Literal, Optional, Tuple, overload, NamedTuple
+from typing import List, Dict, Any, Optional, NamedTuple
 
 import aiohttp
-import asyncio
 
 from neko.providers.abc import Provider
-from neko.utils import Colors, error
+from neko.utils import error
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
 
@@ -77,6 +76,8 @@ class RedditProvider(Provider):
                 images.append(RedditImage(f'https://i.redd.it/{id}.{extension}', name))
 
             return images
+        
+        return []
 
     async def fetch_image(self, _: str) -> str:
         if not self._cache:
