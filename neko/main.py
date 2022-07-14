@@ -1,4 +1,3 @@
-from typing import List, Tuple
 import aiohttp
 import pathlib
 import argparse

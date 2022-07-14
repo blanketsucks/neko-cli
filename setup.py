@@ -10,7 +10,9 @@ with open('requirements.txt', 'r') as file:
 
 setup(
     name='neko',
+    version='1.0.0',
     author='blanketsucks',
+    url='https://github.com/blanketsucks/neko-cli',
     packages=packages,
     entry_points={
         'console_scripts': ['neko-cli = neko.__main__:main', 'neko-viewer = neko.viewer:main'],

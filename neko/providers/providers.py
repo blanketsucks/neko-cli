@@ -1,7 +1,6 @@
 from typing import Dict, Type, Optional
 
 from .abc import Provider
-
 from .akaneko import AkanekoProvider
 from .hmtai import HmtaiProvider
 from .nekobot import NekobotProvider
