@@ -45,33 +45,24 @@ class RedditProvider(Provider):
         if self.last:
             params['after'] = self.last
 
-        async with self.session.get(self.BASE_URL + f'r/{self.subreddit}/{self.sort}.json', params=params) as response:
-            if response.status == 429:
-                retry_after = float(response.headers['Retry-After'])
+        route = f'r/{self.subreddit}/{self.sort}/.json'
+        data = await self.request(route, params=params)
 
-                if self.debug:
-                    print(f'{Colors.red}- Too many requests. Retrying in {retry_after} seconds.{Colors.reset}')
+        images: List[RedditImage] = []
 
-                await asyncio.sleep(retry_after)
-                return await self._fetch_many()
+        for child in data['data']['children']:
+            post = child['data']
+            if post['is_self']:
+                continue
 
-            data = await response.json()
+            if post.get('is_gallery', False):
+                images += await self._fetch_gallery_items(post['url'], post['name'])
+            else:
+                images.append(RedditImage(post['url'], post['name']))
 
-            images: List[RedditImage] = []
+            self.last = post['name']
 
-            for child in data['data']['children']:
-                post = child['data']
-                if post['is_self']:
-                    continue
-
-                if post.get('is_gallery', False):
-                    images += await self._fetch_gallery_items(post['url'], post['name'])
-                else:
-                    images.append(RedditImage(post['url'], post['name']))
-
-                self.last = post['name']
-
-            return images
+        return images
 
     async def _fetch_gallery_items(self, url: str, name: str) -> List[RedditImage]:
         new_url = url.replace('gallery', 'comments') + '.json'

@@ -61,6 +61,7 @@ async def main():
             return 0
 
     if args.type == 'check':
+        print()
         if not categories:
             print(f'{Colors.white}- There are no categories available with this provider.{Colors.reset}')
         else:
@@ -76,9 +77,9 @@ async def main():
         return 0
 
     if categories and args.type not in categories:
-        print(f'{Colors.red}- Invalid category.{Colors.reset}')
-        await session.close()
+        print(f'\n{Colors.red}- Invalid category.{Colors.reset}')
 
+        await session.close()
         return 1
 
     path = pathlib.Path(args.path).resolve()
@@ -108,7 +109,7 @@ async def main():
         args.amount = int(args.amount)
 
     print()
-    
+
     async def _download(url: str) -> None:
         nonlocal success, i, retries
 

@@ -11,19 +11,17 @@ class HmtaiProvider(Provider):
     BASE_URL = 'https://hmtai.herokuapp.com/v2/'
 
     async def fetch_image(self, type: str) -> str:
-        async with self.session.get(self.BASE_URL + type) as response:
-            data = await response.json()
-            return data['url']
+        data = await self.request(type)
+        return data['url']
 
     async def fetch_categories(self) -> Dict[str, int]:
-        async with self.session.get(self.BASE_URL + 'endpoints') as response:
-            data = await response.json()
-            categories: Dict[str, int] = {}
+        data = await self.request('endpoints')
+        categories: Dict[str, int] = {}
 
-            categories.update({category: -1 for category in data['sfw']})
-            categories.update({category: -1 for category in data['nsfw']})
+        categories.update({category: -1 for category in data['sfw']})
+        categories.update({category: -1 for category in data['nsfw']})
 
-            return categories
+        return categories
 
     def get_identifier_from_url(self, url: str) -> str:
         match = DISCORD_CDN_REGEX.match(url)

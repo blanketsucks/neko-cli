@@ -22,9 +22,8 @@ class AkanekoProvider(Provider):
     BASE_URL = 'https://akaneko-api.herokuapp.com/api/'
 
     async def fetch_image(self, type: str) -> str:
-        async with self.session.get(self.BASE_URL + type) as response:
-            data = await response.json()
-            return data['url']
+        data = await self.request(type)
+        return data['url']
 
     async def fetch_categories(self) -> Dict[str, int]:
         return {category: -1 for category in AKANEKO_CATEGORIES}

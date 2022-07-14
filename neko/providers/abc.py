@@ -1,7 +1,10 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from abc import ABC, abstractmethod
 import aiohttp
+import asyncio
+
+from neko.utils import Colors
 
 class Provider(ABC):
     BASE_URL: str
@@ -10,6 +13,39 @@ class Provider(ABC):
         self.session = session
         self.extras = extras
         self.debug = debug
+
+    async def request(self, route: Optional[str] = None, **kwargs: Any) -> Dict[str, Any]:
+        """
+        Requests the given route with the given kwargs.
+
+        Arguments
+        ---------
+        route: Optional[:class:`str`]
+            The route to request.
+        **kwargs: Any
+            Extra arguments to pass to the request.
+
+        Returns
+        -------
+        :class:`dict`
+            The JSON response.
+        """
+        if route is None:
+            url = self.BASE_URL
+        else:
+            url = self.BASE_URL + route
+
+        async with self.session.get(url, **kwargs) as response:
+            if response.status == 429:
+                retry_after = float(response.headers['Retry-After'])
+
+                if self.debug:
+                    print(f'{Colors.red}- Too many requests. Retrying in {retry_after} seconds.{Colors.reset}')
+
+                await asyncio.sleep(retry_after)
+                return await self.request(route, **kwargs)
+
+            return await response.json()
 
     @abstractmethod
     async def fetch_image(self, type: str) -> str:

@@ -30,7 +30,7 @@ class Downloader:
         return content_type.split('/')[-1]
 
     def get_download_path(self, ident: str, extension: str) -> pathlib.Path:
-        return (self.path / ident).with_suffix(extension)
+        return (self.path / f'{ident}.{extension}')
 
     def has_extension(self, ident: str) -> bool:
         return len(ident.split('.')) > 1

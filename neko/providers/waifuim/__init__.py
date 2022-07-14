@@ -9,8 +9,7 @@ class WaifuimProvider(Provider):
         params['selected_tags'] = type
         params['nsfw'] = 'on'
 
-        async with self.session.get(self.BASE_URL + 'random', params=params) as response:
-            return await response.json()
+        return await super().request('random', params=params)
 
     async def fetch_image(self, type: str) -> str:
         data = await self.request(type)
