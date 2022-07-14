@@ -1,4 +1,4 @@
-# neko
+# neko-cli
 
 A CLI tool written in Python to view and download images across various APIs.
 
