@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import List, Tuple
 import aiohttp
 import pathlib
 import argparse
@@ -68,7 +68,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
         ''', 
         required=False
     )
-    
+
     parser.add_argument('--view', action='store_true', help='View the images after downloading.')
     parser.add_argument('--debug', action='store_true', help='Print debug information.')
 
@@ -101,7 +101,7 @@ async def main():
     categories = await provider.fetch_categories()
     if args.category is None and categories:
         args.category = get_input('{white}- Please enter the category you want to download (You can also type `check` to see all the available categories){reset}: {green}')
-        if args.tycategorype in ('q', 'quit', 'exit'):
+        if args.category in ('q', 'quit', 'exit'):
             print(Colors.reset.value)
 
             await session.close()
