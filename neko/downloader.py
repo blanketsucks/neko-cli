@@ -15,7 +15,7 @@ class Downloader:
         url: str,
         path: pathlib.Path,
         *,
-        debug: bool = True
+        debug: bool = False
     ) -> None:
         self.session = session
         self.url = url

@@ -11,14 +11,15 @@ class NekobotProvider(Provider):
     async def fetch_image(self, type: str) -> str:
         params = {'type': type}
         async with self.session.get(self.BASE_URL, params=params) as response:
-            data = await response.json()
             if response.status == 429:
                 retry_after = float(response.headers['Retry-After'])
-                print(f'{Colors.red}- Too many requests. Retrying in {retry_after} seconds.{Colors.reset}')
+                if self.debug:
+                    print(f'{Colors.red}- Too many requests. Retrying in {retry_after} seconds.{Colors.reset}')
 
                 await asyncio.sleep(retry_after)
                 return await self.fetch_image(type)
 
+            data = await response.json()
             return data['message']
         
     async def fetch_categories(self) -> Dict[str, int]:

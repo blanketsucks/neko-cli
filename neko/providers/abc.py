@@ -6,9 +6,10 @@ import aiohttp
 class Provider(ABC):
     BASE_URL: str
 
-    def __init__(self, session: aiohttp.ClientSession, extras: Dict[str, Any]):
+    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
         self.session = session
         self.extras = extras
+        self.debug = debug
 
     @abstractmethod
     async def fetch_image(self, type: str) -> str:

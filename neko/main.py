@@ -23,6 +23,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     Currently the only provider that uses this information is reddit.
     ''', required=False)
     parser.add_argument('--view', action='store_true', help='View the images after downloading.')
+    parser.add_argument('--debug', action='store_true', help='Print debug information.')
 
     return parser
 
@@ -45,9 +46,10 @@ async def main():
         return 1
 
     session = aiohttp.ClientSession()
-    provider = ALL_PROVIDERS[args.provider](session, args.extras)
+    provider = ALL_PROVIDERS[args.provider](session, extras=args.extras, debug=args.debug)
 
-    print(f'{Colors.white}- Provider used{Colors.reset}: {Colors.green}{args.provider!r}{Colors.reset}\n')
+    if args.debug:
+        print(f'{Colors.white}- Provider used{Colors.reset}: {Colors.green}{args.provider!r}{Colors.reset}\n')
 
     categories = await provider.fetch_categories()
     if args.type is None and categories:
@@ -57,8 +59,6 @@ async def main():
 
             await session.close()
             return 0
-
-        print('\n')
 
     if args.type == 'check':
         if not categories:
@@ -93,8 +93,6 @@ async def main():
             await session.close()
             return 0
 
-        print('\n')
-
     i = 0
     success = 0
     retries = 0
@@ -109,16 +107,19 @@ async def main():
     else:
         args.amount = int(args.amount)
 
+    print()
+    
     async def _download(url: str) -> None:
         nonlocal success, i, retries
 
-        downloader = Downloader(session, url, path)
+        downloader = Downloader(session, url, path, debug=args.debug)
 
         identifier = provider.get_identifier_from_url(url)
         p = await downloader.fetch_download_path(identifier)
         if p.exists():
-            fmt = f'{Colors.white}- {p.name}{Colors.reset}: {Colors.green}Already downloaded. Ignoring.{Colors.reset}'
-            print(fmt)
+            if args.debug:
+                fmt = f'{Colors.white}- {p.name}{Colors.reset}: {Colors.green}Already downloaded. Ignoring.{Colors.reset}'
+                print(fmt)
 
             if not args.retry_if_exists:
                 i += 1
@@ -129,6 +130,7 @@ async def main():
                     fmt = f'{Colors.red}- Reached maximum amount of consecutive retries.{Colors.reset}'
                     print(fmt)
 
+                    await session.close()
                     exit(1)
         else:
             success += await downloader.download(identifier)

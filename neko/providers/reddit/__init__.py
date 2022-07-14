@@ -15,8 +15,8 @@ class RedditImage(NamedTuple):
 class RedditProvider(Provider):
     BASE_URL = 'https://reddit.com/'
 
-    def __init__(self, session: aiohttp.ClientSession, extras: Dict[str, Any]):
-        super().__init__(session, extras)
+    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
+        super().__init__(session, extras=extras, debug=debug)
 
         try:
             self.subreddit = extras.pop('subreddit')
@@ -48,11 +48,13 @@ class RedditProvider(Provider):
         async with self.session.get(self.BASE_URL + f'r/{self.subreddit}/{self.sort}.json', params=params) as response:
             if response.status == 429:
                 retry_after = float(response.headers['Retry-After'])
-                print(f'{Colors.red}- Too many requests. Retrying in {retry_after} seconds.{Colors.reset}')
+
+                if self.debug:
+                    print(f'{Colors.red}- Too many requests. Retrying in {retry_after} seconds.{Colors.reset}')
 
                 await asyncio.sleep(retry_after)
                 return await self._fetch_many()
-            
+
             data = await response.json()
 
             images: List[RedditImage] = []
