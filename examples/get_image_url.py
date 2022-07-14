@@ -4,7 +4,7 @@ import aiohttp
 
 async def main():
     async with aiohttp.ClientSession() as session:
-        provider = neko.providers.NekobotProvider(session, {})
+        provider = neko.providers.NekobotProvider(session, extras={})
         url = await provider.fetch_image('neko')
 
         print(url)

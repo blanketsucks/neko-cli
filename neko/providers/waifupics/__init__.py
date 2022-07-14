@@ -10,7 +10,7 @@ class WaifupicsProvider(Provider):
         return data['url']
 
     async def fetch_many(self, type: str) -> List[str]:
-        data = await self.request(f'many/nsfw/{type}', many='true', json={'exclude': []})
+        data = await self.request(f'many/nsfw/{type}', method='POST', json={'exclude': []})
         return data['files']
 
     async def fetch_categories(self) -> Dict[str, int]:

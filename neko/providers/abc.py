@@ -35,7 +35,8 @@ class Provider(ABC):
         else:
             url = self.BASE_URL + route
 
-        async with self.session.get(url, **kwargs) as response:
+        kwargs.setdefault('method', 'GET')
+        async with self.session.request(url, **kwargs) as response:
             if response.status == 429:
                 retry_after = float(response.headers['Retry-After'])
 
@@ -49,17 +50,16 @@ class Provider(ABC):
 
         return {}
 
-
     @abstractmethod
-    async def fetch_image(self, type: str) -> str:
+    async def fetch_image(self, category: str) -> str:
         """
-        Fetches an image from the provider with the given type.
+        Fetches an image from the provider with the given category.
         Optionally, subclasses may ignore the type argument.
 
         Arguments
         ---------
-        type: :class:`str`
-            The type of image to fetch.
+        category: :class:`str`
+            The category of image to fetch.
         
         Returns
         -------
@@ -68,9 +68,9 @@ class Provider(ABC):
         """
         raise NotImplementedError
 
-    async def fetch_many(self, type: str) -> List[str]:
+    async def fetch_many(self, category: str) -> List[str]:
         """
-        Fetches multiple images from the provider with the given type.
+        Fetches multiple images from the provider with the given category.
         Optionally, subclasses may ignore the type argument.
 
         The default implementation returns a single element list.
@@ -78,15 +78,15 @@ class Provider(ABC):
 
         Arguments
         ---------
-        type: :class:`str`
-            The type of image to fetch.
+        category: :class:`str`
+            The category of image to fetch.
 
         Returns
         -------
         :class:`list` of :class:`str`
             The URLs of the images.
         """
-        return [await self.fetch_image(type)]
+        return [await self.fetch_image(category)]
 
     @abstractmethod
     async def fetch_categories(self) -> Dict[str, int]:

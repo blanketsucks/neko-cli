@@ -3,7 +3,6 @@ from typing import List, Dict, Any, Optional, NamedTuple
 import aiohttp
 
 from neko.providers.abc import Provider
-from neko.utils import error
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
 
@@ -20,16 +19,16 @@ class RedditProvider(Provider):
         try:
             self.subreddit = extras.pop('subreddit')
             if not isinstance(self.subreddit, str):
-                error('`subreddit` must be a string.')
+                raise ValueError('subreddit must be a string')
         except KeyError:
-            error('No subreddit specified.')
+            raise ValueError('subreddit is required')
 
         self.sort = extras.pop('sort', 'hot')
         if not isinstance(self.sort, str):
-            error('`sort` must be a string.')
+            raise ValueError('sort must be a string')
 
         if self.sort not in ('hot', 'new', 'rising', 'top', 'controversial'):
-            error('`sort` must be one of "hot", "new", "rising", "top" or "controversial".')
+            raise ValueError('sort must be one of hot, new, rising, top, controversial')
 
         self.session.headers['User-Agent'] = extras.pop('user_agent', USER_AGENT)
         self.last: Optional[str] = None
@@ -79,7 +78,7 @@ class RedditProvider(Provider):
         
         return []
 
-    async def fetch_image(self, _: str) -> str:
+    async def fetch_image(self, _: str = '') -> str:
         if not self._cache:
             # Cache the responses to avoid API calls
             self._cache = await self._fetch_many()
@@ -89,7 +88,7 @@ class RedditProvider(Provider):
 
         return image
 
-    async def fetch_many(self, _: str) -> List[str]:
+    async def fetch_many(self, _: str = '') -> List[str]:
         images = await self._fetch_many()
         return [image.url for image in images]
 

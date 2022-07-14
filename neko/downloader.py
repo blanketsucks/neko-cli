@@ -69,6 +69,8 @@ class Downloader:
         async with self.session.head(self.url) as response:
             return dict(response.headers)
 
+        return {}
+
     async def download(self, ident: str) -> bool:
         async with self.session.get(self.url) as response:
             if response.status != 200:
@@ -93,3 +95,5 @@ class Downloader:
 
             await self.write(path, response)
             return True
+
+        return False

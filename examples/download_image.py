@@ -6,13 +6,11 @@ import pathlib
 
 async def main():
     async with aiohttp.ClientSession() as session:
-        provider = NekobotProvider(session, {})
+        provider = NekobotProvider(session, extras={})
         url = await provider.fetch_image('neko')
 
         download_path = pathlib.Path('path/to/download/dir')
-
-        # The debug keyword indicates whether or not to print messages to the console.
-        downloader = Downloader(session, url, download_path, debug=False)
+        downloader = Downloader(session, url, download_path)
 
         # This identifier represents an identifier unique for this url.
         identifier = provider.get_identifier_from_url(url)
