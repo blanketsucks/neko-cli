@@ -186,8 +186,6 @@ class Application(tkinter.Tk):
 
     def next(self, *args: Any) -> None:
         self.index += 1
-        self.frames = 0
-
         try:
             image, name = self.images[self.index]
         except IndexError:
@@ -198,8 +196,6 @@ class Application(tkinter.Tk):
 
     def previous(self, *args: Any) -> None:
         self.index -= 1
-        self.frames = 0
-
         if self.index < 0:
             self.index = len(self.images) - 1
 
