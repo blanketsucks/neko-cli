@@ -4,7 +4,7 @@ import aiohttp
 
 async def main(subreddit: str, sort_by: str) -> None:
     async with aiohttp.ClientSession() as session:
-        # The reddit provider is the only provider that uses extra information (for now).
+        # The reddit provider is a provider that uses extra information (for now).
         # The subreddit key is required and the sort is optional.
         # Any extra arguments will be passed in as parameters during the request.
         provider = RedditProvider(session, extras={'subreddit': subreddit, 'sort': sort_by})

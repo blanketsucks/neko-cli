@@ -44,12 +44,9 @@ class Downloader:
             yield chunk
 
     async def write(self, path: pathlib.Path, response: aiohttp.ClientResponse) -> None:
-        file = path.open('wb')
-        async for chunk in self.chunk(response):
-            file.write(chunk)
-
-        file.flush()
-        file.close()
+        with path.open('wb') as file:
+            async for chunk in self.chunk(response):
+                file.write(chunk)
 
         if self.debug:
             fmt = f"{Colors.white}- {path.name}{Colors.reset}: {Colors.green}Successfully Downloaded.{Colors.reset}"
@@ -86,7 +83,7 @@ class Downloader:
             else:
                 path = self.path / ident
 
-            if path.suffix not in ('.jpg', '.jpeg', '.png', '.gif'):
+            if path.suffix not in ('.jpg', '.jpeg', '.png', '.gif', '.webm', '.mp4'):
                 if self.debug:
                     fmt = f"{Colors.white}- {ident}{Colors.reset}: {Colors.red}Unsupported file type '{path.suffix}'.{Colors.reset}"
                     print(fmt)

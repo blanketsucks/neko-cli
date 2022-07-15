@@ -4,6 +4,8 @@ import argparse
 import asyncio
 import json
 
+from . import __version__
+
 from .downloader import Downloader
 from .providers import ALL_PROVIDERS
 from .utils import Colors, get_input
@@ -32,7 +34,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
         '-p', 
         '--path', 
         type=str, 
-        help='The path where to save the images. Defaults to `./images`', 
+        help='The path where to save the images. Defaults to `./images`.', 
         default='./images'
     )
 
@@ -47,29 +49,27 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         '--retry-if-exists', 
         action='store_true', 
-        help='Retry the request if the file already exists. Defaults to False', 
+        help='Retry the request if the file already exists. Defaults to False.', 
         default=False
     )
 
     parser.add_argument(
         '--max-retries', 
         type=str, 
-        help='The maximum amount of consecutive retries or `none`. Defaults to `none`', 
+        help='The maximum amount of consecutive retries or `none`. Defaults to `none`.', 
         default='none'
     )
 
     parser.add_argument(
         '--extras', 
         type=argparse.FileType('r'), 
-        help='''
-            Extra arguments to be passed to the provider. Should be a file path to a JSON file.
-            Currently the only provider that uses this information is reddit.
-        ''', 
+        help='Extra arguments to be passed to the provider. Should be a file path to a JSON file.', 
         required=False
     )
 
     parser.add_argument('--view', action='store_true', help='View the images after downloading.')
     parser.add_argument('--debug', action='store_true', help='Print debug information.')
+    parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
 
     return parser
 
@@ -100,9 +100,9 @@ async def main():
     categories = await provider.fetch_categories()
     if args.category is None and categories:
         args.category = get_input('{white}- Please enter the category you want to download (You can also type `check` to see all the available categories){reset}: {green}')
+        print(Colors.reset.value, end='')
+        
         if args.category in ('q', 'quit', 'exit'):
-            print(Colors.reset.value)
-
             await session.close()
             return 0
 
@@ -134,9 +134,9 @@ async def main():
 
     if args.amount is None:
         args.amount = get_input('{white}- Please enter the amount of images you want to download (You can also type `all` to download all the images){reset}: {green}')
+        print(Colors.reset.value, end='')
+        
         if args.amount in ('q', 'quit', 'exit'):
-            print(Colors.reset.value)
-
             await session.close()
             return 0
 

@@ -10,7 +10,7 @@ with open('requirements.txt', 'r') as file:
 
 setup(
     name='neko',
-    version='1.0.0',
+    version='1.1.0',
     author='blanketsucks',
     url='https://github.com/blanketsucks/neko-cli',
     packages=packages,

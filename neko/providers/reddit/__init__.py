@@ -3,6 +3,7 @@ from typing import List, Dict, Any, Optional, NamedTuple
 import aiohttp
 
 from neko.providers.abc import Provider
+from neko.providers.utils import get_str_value
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
 
@@ -16,12 +17,7 @@ class RedditProvider(Provider):
     def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
         super().__init__(session, extras=extras, debug=debug)
 
-        try:
-            self.subreddit = extras.pop('subreddit')
-            if not isinstance(self.subreddit, str):
-                raise ValueError('subreddit must be a string')
-        except KeyError:
-            raise ValueError('subreddit is required')
+        self.subreddit = get_str_value(extras, 'subreddit')
 
         self.sort = extras.pop('sort', 'hot')
         if not isinstance(self.sort, str):

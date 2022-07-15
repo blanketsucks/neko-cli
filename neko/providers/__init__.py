@@ -6,3 +6,4 @@ from .nekobot import NekobotProvider
 from .waifupics import WaifupicsProvider
 from .waifuim import WaifuimProvider
 from .reddit import RedditProvider
+from .danbooru import DanbooruProvider

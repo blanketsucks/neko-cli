@@ -46,6 +46,7 @@ class Provider(ABC):
                 await asyncio.sleep(retry_after)
                 return await self.request(route, **kwargs)
 
+            response.raise_for_status()
             return await response.json()
 
         return {}

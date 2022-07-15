@@ -7,6 +7,7 @@ from .nekobot import NekobotProvider
 from .waifupics import WaifupicsProvider
 from .waifuim import WaifuimProvider
 from .reddit import RedditProvider
+from .danbooru import DanbooruProvider
 
 ALL_PROVIDERS: Dict[str, Type[Provider]] = {
     'akaneko': AkanekoProvider,
@@ -15,6 +16,7 @@ ALL_PROVIDERS: Dict[str, Type[Provider]] = {
     'waifu.pics': WaifupicsProvider,
     'waifu.im': WaifuimProvider,
     'reddit': RedditProvider,
+    'danbooru': DanbooruProvider,
 }
 
 def add_provider(name: str, provider: Type[Provider]):

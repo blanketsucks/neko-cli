@@ -4,6 +4,7 @@ extras.json
 legacy.py
 clear.py
 test
+test.*
 
 neko.egg-info
 build

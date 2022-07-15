@@ -68,11 +68,13 @@ class Application(tkinter.Tk):
         duration: int = 1, 
         width: int = 720,
         height: int = 720,
+        debug: bool = False,
         **kwargs: Any
     ) -> None:
         super().__init__(*args, **kwargs)
         self.height = height
         self.width = width
+        self.debug = debug
 
         if not paths:
             self.images: List[Tuple[Image.Image, str]] = []
@@ -132,15 +134,19 @@ class Application(tkinter.Tk):
                     try:
                         images.append(self.open_image(image))
                     except UnidentifiedImageError:
-                        fmt = f'{Colors.white}- {image.name}{Colors.reset}: {Colors.red}Error while loading.{Colors.reset}'
+                        if self.debug:
+                            fmt = f'{Colors.white}- {image.name}{Colors.reset}: {Colors.red}Error while loading.{Colors.reset}'
+                            print(fmt)
+                        
                         failed += 1
                     else:
-                        fmt = f'{Colors.white}- {image.name}{Colors.reset}: {Colors.green}Loaded.{Colors.reset}'
-                    
-                    print(fmt)
+                        if self.debug:
+                            fmt = f'{Colors.white}- {image.name}{Colors.reset}: {Colors.green}Loaded.{Colors.reset}'
+                            print(fmt)
 
-        length = len(images)
-        print(f'\n{Colors.white}- Loaded {length-failed}/{length} images.{Colors.reset}')
+        if self.debug:
+            length = len(images)
+            print(f'\n{Colors.white}- Loaded {length-failed}/{length} images.{Colors.reset}')
 
         return images
 
@@ -165,7 +171,9 @@ class Application(tkinter.Tk):
             height = max_height
             width = math.ceil(width * ratio)
 
-        print(f'{Colors.white}- {name}{Colors.reset}: {Colors.green}Resized to {width}x{height}.{Colors.reset}')
+        if self.debug:
+            print(f'{Colors.white}- {name}{Colors.reset}: {Colors.green}Resized to {width}x{height}.{Colors.reset}')
+        
         if image.format == 'GIF':
             for frame in ImageSequence.Iterator(image):
                 frame.resize((width, height))
@@ -242,9 +250,10 @@ def main():
     parser.add_argument('--path', type=str, help='Path to the directory containing the images.', default='./images')
     parser.add_argument('--width', type=int, help='Width of the window. Defaults to 720. Images are resized according to this argument.', default=720)
     parser.add_argument('--height', type=int, help='Height of the window. Defaults to 720. Images are resized according to this argument.', default=720)
+    parser.add_argument('--debug', action='store_true', help='Print debug messages.', default=False)
 
     args = parser.parse_args()
-    app = Application(width=args.width, height=args.height, paths=[args.path])
+    app = Application(width=args.width, height=args.height, paths=[args.path], debug=args.debug)
 
     app.run()
     return 0
