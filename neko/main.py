@@ -67,6 +67,13 @@ def create_argument_parser() -> argparse.ArgumentParser:
         required=False
     )
 
+    parser.add_argument(
+        '--nsfw', 
+        action='store_true', 
+        help='Download NSFW images. Only matters with waifu.im and waifu.pics. Defaults to False', 
+        default=False
+    )
+
     parser.add_argument('--view', action='store_true', help='View the images after downloading.')
     parser.add_argument('--debug', action='store_true', help='Print debug information.')
     parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
@@ -82,6 +89,8 @@ async def main():
             args.extras = json.load(file)
     else:
         args.extras = {}
+
+    args.extras['nsfw'] = args.nsfw
 
     if args.max_retries.lower() == 'none':
         args.max_retries = float('inf')

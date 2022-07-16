@@ -20,7 +20,7 @@ python3 -m pip install git+https://github.com/blanketsucks/neko.git
 
 ```bash
 usage: neko-cli [-h] [-c CATEGORY] [-a AMOUNT] [-p PATH] [--provider {akaneko,nekobot,hmtai,waifu.pics,waifu.im,reddit,danbooru}]
-                [--retry-if-exists] [--max-retries MAX_RETRIES] [--extras EXTRAS] [--view] [--debug] [--version]
+                [--retry-if-exists] [--max-retries MAX_RETRIES] [--extras EXTRAS] [--nsfw] [--view] [--debug] [--version]
 
 Download NSFW and SFW from various providers.
 
@@ -37,6 +37,7 @@ optional arguments:
   --max-retries MAX_RETRIES
                         The maximum amount of consecutive retries or `none`. Defaults to `none`.
   --extras EXTRAS       Extra arguments to be passed to the provider. Should be a file path to a JSON file.
+  --nsfw                Download NSFW images. Only matters with waifu.im and waifu.pics. Defaults to False
   --view                View the images after downloading.
   --debug               Print debug information.
   --version             show program's version number and exit
