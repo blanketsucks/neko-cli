@@ -1,6 +1,13 @@
 from setuptools import find_packages, setup
+import re
 
 packages = find_packages()
+
+with open('neko/__init__.py') as file:
+    match = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', file.read(), re.MULTILINE)
+    assert match, 'Version is not set'
+
+    version = match.group(1)
 
 with open('README.md', 'r') as file:
     description = file.read()
@@ -10,7 +17,7 @@ with open('requirements.txt', 'r') as file:
 
 setup(
     name='neko',
-    version='1.2.0',
+    version=version,
     author='blanketsucks',
     url='https://github.com/blanketsucks/neko-cli',
     packages=packages,

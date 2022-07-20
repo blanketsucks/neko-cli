@@ -74,9 +74,6 @@ class Provider(ABC):
         Fetches multiple images from the provider with the given category.
         Optionally, subclasses may ignore the type argument.
 
-        The default implementation returns a single element list.
-        This method should and is preferred to return a list of 30 elements.
-
         Arguments
         ---------
         category: :class:`str`
@@ -87,7 +84,14 @@ class Provider(ABC):
         :class:`list` of :class:`str`
             The URLs of the images.
         """
-        return [await self.fetch_image(category)]
+        images: List[str] = []
+        for _ in range(30):
+            image = await self.fetch_image(category)
+            images.append(image)
+
+            await asyncio.sleep(0.5) # Sleep for a bit to avoid ratelimits as much as possible
+
+        return images
 
     @abstractmethod
     async def fetch_categories(self) -> Dict[str, int]:
