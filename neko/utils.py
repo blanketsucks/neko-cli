@@ -1,5 +1,3 @@
-from typing import NoReturn
-
 from enum import Enum
 
 class Colors(str, Enum):
@@ -11,6 +9,8 @@ class Colors(str, Enum):
 def get_input(prompt: str) -> str:
     return input(prompt.format_map(Colors.__members__))
 
-def error(msg: str) -> NoReturn:
-    print(f'{Colors.red}- {msg}{Colors.reset}')
-    exit(1)
+def format_exception(exc: BaseException) -> str:
+    name = exc.__class__.__name__
+    message = ' '.join(exc.args)
+
+    return f'{name}: {message}'

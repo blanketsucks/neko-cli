@@ -18,8 +18,8 @@ class Provider(ABC):
         """
         Requests the given route with the given kwargs.
 
-        Arguments
-        ---------
+        Parameters
+        -----------
         route: Optional[:class:`str`]
             The route to request.
         **kwargs: Any
@@ -57,8 +57,8 @@ class Provider(ABC):
         Fetches an image from the provider with the given category.
         Optionally, subclasses may ignore the type argument.
 
-        Arguments
-        ---------
+        Parameters
+        -----------
         category: :class:`str`
             The category of image to fetch.
         
@@ -74,8 +74,8 @@ class Provider(ABC):
         Fetches multiple images from the provider with the given category.
         Optionally, subclasses may ignore the type argument.
 
-        Arguments
-        ---------
+        Parameters
+        -----------
         category: :class:`str`
             The category of image to fetch.
 
@@ -110,8 +110,8 @@ class Provider(ABC):
         Returns the identifier of the image from the given URL.
         The identifier returned must be unique.
 
-        Arguments
-        ---------
+        Parameters
+        -----------
         url: :class:`str`
             The URL of the image.
 

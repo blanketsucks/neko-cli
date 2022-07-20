@@ -1,3 +1,4 @@
+import traceback
 import aiohttp
 import pathlib
 import argparse
@@ -154,7 +155,7 @@ async def main():
     retries = 0
 
     if args.amount == 'all':
-        args.amount = categories[args.type]
+        args.amount = categories[args.category]
         if args.amount < 0:
             print(f'{Colors.red}- Sorry but `all` is not supported with this provider.{Colors.reset}')
             await session.close()
@@ -165,35 +166,7 @@ async def main():
 
     print()
 
-    async def _download(url: str) -> None:
-        nonlocal success, i, retries
-
-        downloader = Downloader(session, url, path, debug=args.debug)
-
-        identifier = provider.get_identifier_from_url(url)
-        p = await downloader.fetch_download_path(identifier)
-        if p.exists():
-            if args.debug:
-                fmt = f'{Colors.white}- {p.name}{Colors.reset}: {Colors.green}Already downloaded. Ignoring.{Colors.reset}'
-                print(fmt)
-
-            if not args.retry_if_exists:
-                i += 1
-            else:
-                if retries < args.max_retries:
-                    retries += 1
-                else:
-                    fmt = f'{Colors.red}- Reached maximum amount of consecutive retries.{Colors.reset}'
-                    print(fmt)
-
-                    await session.close()
-                    exit(1)
-        else:
-            success += await downloader.download(identifier)
-
-            retries = 0
-            i += 1
-
+    downloader = Downloader(provider, path, debug=args.debug)
     while True:
         if i == args.amount:
             break
@@ -204,8 +177,26 @@ async def main():
             urls = [await provider.fetch_image(args.category)]
 
         for url in urls:
-            await _download(url)
+            p = await downloader.fetch_download_path(url)
+            if p.exists():
+                if args.debug:
+                    fmt = f'{Colors.white}- {p.name}{Colors.reset}: {Colors.green}Already downloaded. Ignoring.{Colors.reset}'
+                    print(fmt)
 
+                if not args.retry_if_exists:
+                    i += 1
+                else:
+                    if retries < args.max_retries:
+                        retries += 1
+                        continue
+
+                    print(f'{Colors.red}- Reached maximum amount of consecutive retries.{Colors.reset}')
+
+                    await session.close()
+                    return 1
+            else:
+                success += await downloader.download(url); i += 1; retries = 0
+            
         await asyncio.sleep(0.5)
     
     print(f'\n{Colors.white}- Successfully downloaded {success}/{args.amount} images.{Colors.reset}\n')
