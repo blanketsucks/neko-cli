@@ -15,6 +15,7 @@ class RedditProvider(Provider):
     BASE_URL = 'https://reddit.com/'
 
     def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
+        extras.pop('nsfw')
         super().__init__(session, extras=extras, debug=debug)
 
         self.subreddit = get_str_value(extras, 'subreddit')
@@ -27,7 +28,9 @@ class RedditProvider(Provider):
             raise ValueError('sort must be one of hot, new, rising, top, controversial')
 
         self.session.headers['User-Agent'] = extras.pop('user_agent', USER_AGENT)
-        self.last: Optional[str] = None
+        self.last: Optional[str] = None 
+    
+        self.extras.setdefault('limit', 30)
 
         self._cache: List[RedditImage] = []
 
@@ -35,7 +38,7 @@ class RedditProvider(Provider):
         return self._cache.copy()
 
     async def _fetch_many(self) -> List[RedditImage]:
-        params: Dict[str, Any] = {'limit': 30, **self.extras}
+        params: Dict[str, Any] = self.extras.copy()
         if self.last:
             params['after'] = self.last
 
@@ -67,6 +70,9 @@ class RedditProvider(Provider):
 
             medias = data[0]['data']['children'][0]['data']['media_metadata']
             for id, metadata in medias.items():
+                if metadata['status'] != 'valid':
+                    continue
+
                 extension = metadata['m'].split('/')[-1]
                 images.append(RedditImage(f'https://i.redd.it/{id}.{extension}', name))
 

@@ -10,13 +10,10 @@ async def main():
         url = await provider.fetch_image('neko')
 
         download_path = pathlib.Path('path/to/download/dir')
-        downloader = Downloader(session, url, download_path)
-
-        # This identifier represents an identifier unique for this url.
-        identifier = provider.get_identifier_from_url(url)
+        downloader = Downloader(provider, download_path)
 
         # Returns a boolean indicating whether or not the download succeeded.
         # It's up the user to check if the file exists already.
-        await downloader.download(identifier)
+        await downloader.download(url)
 
 asyncio.run(main())
