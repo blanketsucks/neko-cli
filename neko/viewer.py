@@ -83,6 +83,7 @@ class Application(tkinter.Tk):
 
         self.duration = duration
         self.index = -1
+        self.last_index = 0
         self.slideshow: Optional[str] = None
         self.current_image: Optional[Image.Image] = None
 
@@ -108,6 +109,7 @@ class Application(tkinter.Tk):
         root.add_command(label='Slideshow', command=self.start_slideshow, accelerator='Space')
         root.add_command(label='Shuffle', command=self.shuffle, accelerator='Ctrl+S')
         root.add_command(label='Random', command=self.random, accelerator='Ctrl+R')
+        root.add_command(label='Back', command=self.back, accelerator='Ctrl+B')
         root.add_command(label='Goto', command=self.goto, accelerator='Ctrl+G')
 
     def setup_keybinds(self):
@@ -117,6 +119,7 @@ class Application(tkinter.Tk):
         self.bind('<space>', self.start_slideshow)
         self.bind('<Control-s>', self.shuffle)
         self.bind('<Control-r>', self.random)
+        self.bind('<Control-b>', self.back)
         self.bind('<Control-g>', self.goto)
         self.bind('<Control-q>', self._destroy)
 
@@ -193,7 +196,9 @@ class Application(tkinter.Tk):
         self.title(f'{name} | ({self.index + 1}/{len(self.images)})')
 
     def next(self, *args: Any) -> None:
+        self.last_index = self.index
         self.index += 1
+
         try:
             image, name = self.images[self.index]
         except IndexError:
@@ -203,6 +208,7 @@ class Application(tkinter.Tk):
         self.show(image, name)
 
     def previous(self, *args: Any) -> None:
+        self.last_index = self.index
         self.index -= 1
         if self.index < 0:
             self.index = len(self.images) - 1
@@ -228,18 +234,29 @@ class Application(tkinter.Tk):
         self.next()
 
     def random(self, *args: Any) -> None:
+        self.last_index = self.index
         self.index = random.randint(0, len(self.images) - 1)
-        image, name = self.images[self.index]
 
+        image, name = self.images[self.index]
         self.show(image, name)
 
     def goto(self, *args: Any) -> None:
         index = simpledialog.askinteger('Goto', 'Enter the index of the image you want to go to.', parent=self, minvalue=1, maxvalue=len(self.images))
         if index is not None:
+            self.last_index = self.index
             self.index = index - 1
 
             image, name = self.images[self.index]
             self.show(image, name)
+
+    def back(self, *args: Any) -> None:
+        if self.last_index < 0:
+            self.last_index = 0
+
+        self.index = self.last_index
+        image, name = self.images[self.index]
+
+        self.show(image, name)
 
     def run(self):
         self.mainloop()
@@ -253,7 +270,11 @@ def main():
     parser.add_argument('--debug', action='store_true', help='Print debug messages.', default=False)
 
     args = parser.parse_args()
-    app = Application(width=args.width, height=args.height, paths=[args.path], debug=args.debug)
+    app = Application(width=args.width, height=args.height, paths=[
+        'images/danbooru',
+        # 'images/reddit',
+        # 'images/nekobot'
+    ], debug=args.debug)
 
     app.run()
     return 0

@@ -1,11 +1,20 @@
-from typing import Any, Mapping
+from typing import Mapping, Tuple
 
+import multidict
 import aiohttp
 import pathlib
 import asyncio
 
 from .providers import Provider
 from .utils import Colors, format_exception
+
+VALID_SUFFIXES: Tuple[str, ...] = (
+    '.jpg', '.jpeg', '.png', '.gif', '.webm', '.mp4'
+)
+
+def _transform_headers(headers: multidict.CIMultiDictProxy[str]) -> Mapping[str, str]:
+    # I do this in order to suppress the type errors
+    return {key: value for key, value in headers.items()}
 
 class Downloader:
     __slots__ = ('provider', 'path', 'debug')
@@ -66,7 +75,7 @@ class Downloader:
         """
         return len(identifier.split('.')) > 1
 
-    def get_download_path_from_headers(self, identifier: str, headers: Mapping[str, Any]) -> pathlib.Path:
+    def get_download_path_from_headers(self, identifier: str, headers: Mapping[str, str]) -> pathlib.Path:
         """
         Gets the download path from an identifier and headers.
         The :class:`pathlib.Path` may not exist.
@@ -86,7 +95,7 @@ class Downloader:
 
         return path
 
-    async def chunk(self, response: aiohttp.ClientResponse, *, chunk_size: int = 1024):
+    async def chunk(self, response: aiohttp.ClientResponse, *, size: int = 1024):
         """
         Chunks a response into chunks of size `chunk_size`.
 
@@ -94,11 +103,11 @@ class Downloader:
         ----------
         response: :class:`aiohttp.ClientResponse`
             The response to chunk.
-        chunk_size: :class:`int`
+        size: :class:`int`
             The size of each chunk. Defaults to 1024.        
         """
         while True:
-            chunk = await response.content.read(chunk_size)
+            chunk = await response.content.read(size)
             if not chunk:
                 break
 
@@ -128,7 +137,6 @@ class Downloader:
                 print(fmt)
         except Exception as e:
             tmp.unlink()
-            
             if self.debug:
                 exc = format_exception(e)
 
@@ -154,7 +162,7 @@ class Downloader:
 
         return self.get_download_path_from_headers(identifier, headers)
 
-    async def fetch_headers(self, url: str) -> Mapping[str, Any]:
+    async def fetch_headers(self, url: str) -> Mapping[str, str]:
         """
         Fetches the headers from a given URL.
 
@@ -164,9 +172,7 @@ class Downloader:
             The URL of the file.
         """
         async with self.session.head(url) as response:
-            return response.headers
-
-        return {}
+            return _transform_headers(response.headers)
 
     async def download(self, url: str) -> bool:
         """
@@ -187,8 +193,8 @@ class Downloader:
 
                 return False
 
-            path = self.get_download_path_from_headers(identifier, response.headers)
-            if path.suffix not in ('.jpg', '.jpeg', '.png', '.gif', '.webm', '.mp4'):
+            path = self.get_download_path_from_headers(identifier, _transform_headers(response.headers))
+            if path.suffix not in VALID_SUFFIXES:
                 if self.debug:
                     fmt = f"{Colors.white}- {identifier}{Colors.reset}: {Colors.red}Unsupported file type '{path.suffix}'.{Colors.reset}"
                     print(fmt)

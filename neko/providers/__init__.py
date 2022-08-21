@@ -1,5 +1,5 @@
 from .providers import ALL_PROVIDERS, add_provider
-from .abc import Provider
+from .abc import Provider, CachableProvider
 from .akaneko import AkanekoProvider
 from .hmtai import HmtaiProvider
 from .nekobot import NekobotProvider

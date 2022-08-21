@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Optional, NamedTuple
 
 import aiohttp
 
-from neko.providers.abc import Provider
+from neko.providers.abc import CachableProvider
 from neko.providers.utils import get_str_value
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
@@ -11,7 +11,7 @@ class RedditImage(NamedTuple):
     url: str
     name: str
 
-class RedditProvider(Provider):
+class RedditProvider(CachableProvider[RedditImage]):
     BASE_URL = 'https://reddit.com/'
 
     def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
@@ -32,11 +32,6 @@ class RedditProvider(Provider):
     
         self.extras.setdefault('limit', 30)
 
-        self._cache: List[RedditImage] = []
-
-    def get_cached_images(self) -> List[RedditImage]:
-        return self._cache.copy()
-
     async def _fetch_many(self) -> List[RedditImage]:
         params: Dict[str, Any] = self.extras.copy()
         if self.last:
@@ -51,11 +46,12 @@ class RedditProvider(Provider):
             post = child['data']
             if post['is_self']:
                 continue
-
+            
+            url, name = post['url'], post['name']
             if post.get('is_gallery', False):
-                images += await self._fetch_gallery_items(post['url'], post['name'])
+                images += await self._fetch_gallery_items(url, name)
             else:
-                images.append(RedditImage(post['url'], post['name']))
+                images.append(RedditImage(url, name))
 
             self.last = post['name']
 

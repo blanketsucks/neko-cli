@@ -2,19 +2,14 @@ from typing import Dict, List, Any
 
 import aiohttp
 
-from neko.providers.abc import Provider
+from neko.providers.abc import CachableProvider
 
-class WaifupicsProvider(Provider):
+class WaifupicsProvider(CachableProvider[str]):
     BASE_URL = 'https://api.waifu.pics/'
 
     def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
         super().__init__(session, extras=extras, debug=debug)
         self.nsfw: bool = extras.pop('nsfw', False)
-
-        self._cache: List[str] = []
-
-    def get_cached_images(self) -> List[str]:
-        return self._cache.copy()
 
     async def fetch_image(self, type: str) -> str:
         if not self._cache:

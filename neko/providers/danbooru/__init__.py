@@ -2,7 +2,7 @@ from typing import Dict, Any, List, Optional, NamedTuple
 
 import aiohttp
 
-from neko.providers.abc import Provider
+from neko.providers.abc import CachableProvider
 from neko.providers.utils import get_str_value
 
 REQUEST_ROUTES: Dict[str, str] = {
@@ -29,7 +29,7 @@ class DanbooruImage(NamedTuple):
     file: DanbooruFile
     tags: List[str]
 
-class DanbooruProvider(Provider):
+class DanbooruProvider(CachableProvider[DanbooruImage]):
     BASE_URL = 'https://danbooru.donmai.us/'
 
     def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
@@ -82,8 +82,6 @@ class DanbooruProvider(Provider):
  
         self.auth = aiohttp.BasicAuth(self.username, self.api_key)
 
-        self._cache: List[DanbooruImage] = []
-
     @property
     def tags(self) -> List[str]:
         return self.params['tags'].split(' ')
@@ -105,9 +103,6 @@ class DanbooruProvider(Provider):
             images.append(image)
 
         return images
-
-    def get_cached_images(self) -> List[DanbooruImage]:
-        return self._cache.copy()
 
     async def request(self, route: str, **params: Any) -> Any:
         return await super().request(route, auth=self.auth, params=params)

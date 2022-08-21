@@ -1,10 +1,12 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from abc import ABC, abstractmethod
 import aiohttp
 import asyncio
 
 from neko.utils import Colors
+
+T = TypeVar('T')
 
 class Provider(ABC):
     BASE_URL: str
@@ -121,3 +123,12 @@ class Provider(ABC):
             The identifier of the image.
         """
         return url.split('/')[-1]
+
+class CachableProvider(Provider, Generic[T]):
+
+    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
+        super().__init__(session, extras=extras, debug=debug)
+        self._cache: List[T] = []
+
+    def get_cached_images(self) -> List[T]:
+        return self._cache.copy()
