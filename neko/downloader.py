@@ -8,8 +8,8 @@ import asyncio
 from .providers import Provider
 from .utils import Colors, format_exception
 
-VALID_SUFFIXES: Tuple[str, ...] = (
-    '.jpg', '.jpeg', '.png', '.gif', '.webm', '.mp4'
+VALID_EXTENSIONS: Tuple[str, ...] = (
+    'jpg', 'jpeg', 'png', 'gif', 'webm', 'mp4'
 )
 
 def _transform_headers(headers: multidict.CIMultiDictProxy[str]) -> Mapping[str, str]:
@@ -38,7 +38,7 @@ class Downloader:
     def loop(self) -> asyncio.AbstractEventLoop:
         return self.session.loop
 
-    def get_file_extension(self, content_type: str) -> str:
+    def get_file_extension_from_header(self, content_type: str) -> str:
         """
         Parses the file extension from a Content-Type header.
         For example, `image/jpg` becomes `jpg`.
@@ -88,12 +88,18 @@ class Downloader:
             The headers.
         """
         if not self.has_extension(identifier):
-            extension = self.get_file_extension(headers['Content-Type'])
+            extension = self.get_file_extension_from_header(headers['Content-Type'])
             path = self.get_download_path(identifier, extension)
         else:
             path = self.path / identifier
 
         return path
+
+    def get_file_extension(self, identifier: str, headers: Mapping[str, str]):
+        if not self.has_extension(identifier):
+            return self.get_file_extension_from_header(headers['Content-Type'])
+
+        return identifier.split('.')[-1]
 
     async def chunk(self, response: aiohttp.ClientResponse, *, size: int = 1024):
         """
@@ -193,14 +199,16 @@ class Downloader:
 
                 return False
 
-            path = self.get_download_path_from_headers(identifier, _transform_headers(response.headers))
-            if path.suffix not in VALID_SUFFIXES:
+            
+            extension = self.get_file_extension(identifier, _transform_headers(response.headers))
+            if extension not in VALID_EXTENSIONS:
                 if self.debug:
-                    fmt = f"{Colors.white}- {identifier}{Colors.reset}: {Colors.red}Unsupported file type '{path.suffix}'.{Colors.reset}"
+                    fmt = f"{Colors.white}- {identifier}{Colors.reset}: {Colors.red}Unsupported file type '{extension}'.{Colors.reset}"
                     print(fmt)
 
                 return False
 
+            path = self.get_download_path_from_headers(identifier, _transform_headers(response.headers))
             await self.write(path, response)
 
         return True

@@ -7,7 +7,7 @@ import json
 
 from . import __version__
 
-from .downloader import Downloader
+from .downloader import Downloader, VALID_EXTENSIONS
 from .providers import ALL_PROVIDERS
 from .utils import Colors, get_input
 from .viewer import Application as ImageViewer
@@ -177,6 +177,17 @@ async def main():
             urls = [await provider.fetch_image(args.category)]
 
         for url in urls:
+            headers = await downloader.fetch_headers(url)
+            identifier = provider.get_identifier_from_url(url)
+
+            extension = downloader.get_file_extension(identifier, headers)
+            if extension not in VALID_EXTENSIONS:
+                if downloader.debug:
+                    fmt = f"{Colors.white}- {identifier}{Colors.reset}: {Colors.red}Unsupported file type '{extension}'.{Colors.reset}"
+                    print(fmt)
+
+                continue
+
             p = await downloader.fetch_download_path(url)
             if p.exists():
                 if args.debug:

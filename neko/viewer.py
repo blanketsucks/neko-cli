@@ -270,11 +270,7 @@ def main():
     parser.add_argument('--debug', action='store_true', help='Print debug messages.', default=False)
 
     args = parser.parse_args()
-    app = Application(width=args.width, height=args.height, paths=[
-        'images/danbooru',
-        # 'images/reddit',
-        # 'images/nekobot'
-    ], debug=args.debug)
+    app = Application(width=args.width, height=args.height, paths=[args.path], debug=args.debug)
 
     app.run()
     return 0

@@ -1,11 +1,14 @@
 from typing import List, Dict, Any, Optional, NamedTuple
 
 import aiohttp
+import re
 
 from neko.providers.abc import CachableProvider
 from neko.providers.utils import get_str_value
+from neko.utils import Colors
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
+REDDIT_GALLERY_REGEX = re.compile(r'https:\/\/www\.reddit\.com\/gallery\/.+')
 
 class RedditImage(NamedTuple):
     url: str
@@ -30,7 +33,8 @@ class RedditProvider(CachableProvider[RedditImage]):
         self.session.headers['User-Agent'] = extras.pop('user_agent', USER_AGENT)
         self.last: Optional[str] = None 
     
-        self.extras.setdefault('limit', 30)
+        limit: int = self.extras.pop('limit', 30)
+        self.extras['limit'] = max(limit, 100)
 
     async def _fetch_many(self) -> List[RedditImage]:
         params: Dict[str, Any] = self.extras.copy()
@@ -58,6 +62,13 @@ class RedditProvider(CachableProvider[RedditImage]):
         return images
 
     async def _fetch_gallery_items(self, url: str, name: str) -> List[RedditImage]:
+        match = REDDIT_GALLERY_REGEX.match(url)
+        if not match:
+            if self.debug:
+                print(f'{Colors.white}- {name}{Colors.reset}: {Colors.red}{url!r} is not a valid Reddit gallery URL. Skipping.{Colors.reset}')
+
+            return []
+
         new_url = url.replace('gallery', 'comments') + '.json'
         async with self.session.get(new_url) as response:
             data = await response.json()
