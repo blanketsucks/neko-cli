@@ -45,7 +45,7 @@ class Provider(ABC):
             url = self.BASE_URL + route
 
         kwargs.setdefault('method', 'GET')
-        async with self.session.request(url=url, **kwargs) as response:
+        async with self.session.request(url=url, **kwargs) as response: # type: ignore
             if response.status == 429:
                 try:
                     retry_after = float(response.headers['Retry-After'])
