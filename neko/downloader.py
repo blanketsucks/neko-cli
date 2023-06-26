@@ -145,10 +145,10 @@ class Downloader:
                 async for chunk in self.chunk(response):
                     file.write(chunk)
 
-            logger.info(f'Successfully downloaded {path.name!r}')
+            logger.info('Successfully downloaded %r', path.name)
         except Exception as e:
             tmp.unlink()
-            logger.exception(f'Failed to download {path.name!r}', exc_info=e)
+            logger.exception('Failed to download %r', path.name, exc_info=e)
         else:
             try:
                 tmp.rename(path)
@@ -195,17 +195,17 @@ class Downloader:
         async with self.session.get(url, headers=self.headers) as response:
             identifier = self.provider.get_identifier_from_url(url)
             if response.status != 200:
-                logger.error(f'Failed to download {identifier!r} with status code {response.status}')
+                logger.error('Failed to download %r with status code %d', identifier, response.status)
                 return False
             
             try:
                 extension = self.get_file_extension(identifier, _transform_headers(response.headers))
             except KeyError:
-                logger.error(f'Failed to download {identifier!r} with status code {response.status} (missing Content-Type header)')
+                logger.error('Failed to download %r with status code %d (missing Content-Type header)', identifier, response.status)
                 return False
             
             if extension not in VALID_EXTENSIONS:
-                logger.error(f'Failed to download {identifier!r} with status code {response.status} (invalid extension {extension!r})')
+                logger.error('Failed to download %r with status code %d (invalid extension %r)', identifier, response.status, extension)
                 return False
 
             path = self.get_download_path_from_headers(identifier, _transform_headers(response.headers))

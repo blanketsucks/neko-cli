@@ -190,12 +190,12 @@ class Application(tkinter.Tk):
                     image = self.resize(Image.open(file), file.name)
                     images.append((image, file.name))
                 except UnidentifiedImageError:
-                    logger.error(f'Error while loading {file.name!r}.')
+                    logger.error('Error while loading %r.', file.name, exc_info=True)
                     failed += 1
                 else:
-                    logger.info(f'Loaded {file.name!r} with size {image.width}x{image.height}.')
+                    logger.info('Loaded %r with size %dx%d.', file.name, image.width, image.height)
 
-        logger.info(f'Loaded {len(images) - failed}/{len(images)} images.')
+        logger.info('Loaded %d/%d images.', len(images) - failed, len(images))
         return sorted(images, key=lambda image: _sort(image[1]))
 
     def resize(
@@ -243,7 +243,7 @@ class Application(tkinter.Tk):
         self.slide.unload()
         self.set_image(image)
 
-        logger.info(f'Showing {name!r}')
+        logger.info('Showing %r', name)
         self.title(f'{name} | ({self.index + 1}/{len(self.images)})')
 
     def next(self, *args: Any) -> None:

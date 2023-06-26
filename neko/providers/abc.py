@@ -16,10 +16,9 @@ class Provider(ABC):
     REQUIRES_EXTRAS: bool = False
     BASE_URL: str
 
-    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
+    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any]):
         self.session = session
         self.extras = extras
-        self.debug = debug
 
     def finalize(self) -> None:
         return 
@@ -53,15 +52,13 @@ class Provider(ABC):
                 except KeyError:
                     retry_after = 60.0
 
-                logger.error(f'{url!r}: Too many requests. Retrying in {retry_after} seconds.')
+                logger.error('%r: Too many requests. Retrying in %f seconds.', retry_after)
 
                 await asyncio.sleep(retry_after)
                 return await self.request(route, **kwargs)
 
             if response.status != 200:
-                if self.debug:
-                    print(f'{Colors.red}- {url!r}: {response.status} {response.reason}{Colors.reset}')
-
+                logger.error('%r: %d %s', url, response.status, response.reason)
                 return {}
 
             return await response.json()
@@ -138,8 +135,8 @@ class Provider(ABC):
         return url.split('/')[-1]
 
 class CachableProvider(Provider, Generic[T]):
-    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
-        super().__init__(session, extras=extras, debug=debug)
+    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any]):
+        super().__init__(session, extras=extras)
         self._cache: List[T] = []
 
     def get_cached_images(self) -> List[T]:

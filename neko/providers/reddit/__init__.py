@@ -73,7 +73,7 @@ class RedditProvider(CachableProvider[RedditImage]):
     async def _fetch_gallery_items(self, url: str, name: str) -> List[RedditImage]:
         match = REDDIT_GALLERY_REGEX.match(url)
         if not match:
-            logger.warning(f'{url!r} is not a valid Reddit gallery URL. Skipping.')
+            logger.warning('%r is not a valid Reddit gallery URL. Skipping.', url)
             return []
 
         new_url = url.replace('gallery', 'comments') + '.json'

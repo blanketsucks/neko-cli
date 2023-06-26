@@ -34,13 +34,13 @@ class State:
 
             if not is_successful:
                 if depth == 5:
-                    self.logger.error(f'Failed to download {url!r}')
+                    self.logger.error('Failed to download %r', url)
                     return
                 
                 return await self.download(url, depth=depth + 1)
         except Exception as e:
             if depth == 5:
-                self.logger.exception(f'Failed to download {url!r}', exc_info=e)
+                self.logger.exception('Failed to download %r', url, exc_info=e)
                 return
 
             return await self.download(url, depth=depth + 1)
@@ -95,7 +95,7 @@ async def main(args: argparse.Namespace) -> int:
     session = aiohttp.ClientSession()
     provider = ALL_PROVIDERS[args.provider](session, extras=args.extras)
 
-    logger.info(f'Using provider {args.provider!r}.')
+    logger.info('Using provider %r.', args.provider)
 
     categories = await provider.fetch_categories()
     if args.category is None and categories:
@@ -164,7 +164,7 @@ async def main(args: argparse.Namespace) -> int:
         for url in urls:
             p = await downloader.fetch_download_path(url)
             if p.exists():
-                logger.info(f'{p.name!r} already exists. Ignoring.')
+                logger.info('%r already exists. Ignoring.', p.name)
                 continue
 
             all_urls.add(url)
@@ -193,11 +193,11 @@ async def main(args: argparse.Namespace) -> int:
             try:
                 p = await downloader.fetch_download_path(url)
             except KeyError:
-                logger.warning(f'Invalid URL {url!r}. Ignoring.')
+                logger.warning('Invalid URL %r. Ignoring.', url)
                 continue
 
             if p.exists():
-                logger.info(f'{p.name!r} already exists. Ignoring.')
+                logger.info('%r already exists. Ignoring.', p.name)
 
                 if not args.retry_if_exists:
                     fetched += 1; continue

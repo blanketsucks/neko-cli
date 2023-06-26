@@ -66,8 +66,7 @@ class PixivProvider(Provider):
             try:
                 self.ids.append(int(id))
             except ValueError:
-                if self.debug:
-                    print(f'{Colors.red}- {id!r} is not a valid ID.{Colors.reset}')
+                logger.warning('%r is not a valid ID. Ignoring.', id)
 
     async def is_valid_url(self, url: str) -> bool:
         try:
@@ -124,7 +123,7 @@ class PixivProvider(Provider):
                 if not await self.is_valid_url(url):
                     (second, ext) = await self.find_valid_url(uploaded, illust.id, 'png')
         except Exception as exc:
-            logger.error(f'Failed to fetch image: {exc!r}')
+            logger.exception('Failed to fetch image', exc_info=exc)
             return images
 
         for i in range(illust.count):
@@ -141,7 +140,7 @@ class PixivProvider(Provider):
         for id in self.ids:
             data = await self.request(f'/ajax/illust/{id}')
             if not data:
-                logger.warning(f'Failed to fetch illustration {id}')
+                logger.warning('Failed to fetch illustration %d', id)
                 continue
             
             illust = Illustration(self.session, data['body'])
