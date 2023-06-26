@@ -12,6 +12,7 @@ import random
 import tkinter
 import pathlib
 import math
+import sys
 
 class Colors(str, Enum):
     red = '\u001b[1;31m'
@@ -177,9 +178,6 @@ class Application(tkinter.Tk):
         self.bind('<Control-q>', self.destroy)
         self.bind('<F11>', self.fullscreen)
 
-    def open_image(self, path: pathlib.Path) -> Tuple[Image.Image, str]:
-        return self.resize(Image.open(path), path.name), path.name
-
     def load_images(self, paths: List[pathlib.Path]) -> List[Tuple[Image.Image, str]]:
         images: List[Tuple[Image.Image, str]] = []
         failed = 0
@@ -187,7 +185,7 @@ class Application(tkinter.Tk):
         for dir in paths:
             for file in dir.iterdir():
                 try:
-                    image = self.resize(Image.open(file), file.name)
+                    image = self.resize(Image.open(file))
                     images.append((image, file.name))
                 except UnidentifiedImageError:
                     logger.error('Error while loading %r.', file.name, exc_info=True)
@@ -201,7 +199,6 @@ class Application(tkinter.Tk):
     def resize(
         self, 
         image: Image.Image, 
-        name: str, 
         *, 
         max_width: Optional[int] = None, 
         max_height: Optional[int] = None,
@@ -353,4 +350,4 @@ def main():
     return 0
 
 if __name__ == '__main__':
-    exit(main())
+    sys.exit(main())

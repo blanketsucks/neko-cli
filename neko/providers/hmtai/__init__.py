@@ -12,8 +12,8 @@ DISCORD_CDN_REGEX = re.compile(r'https:\/\/cdn\.discordapp\.com\/attachments\/(?
 class HmtaiProvider(Provider):
     BASE_URL = 'https://hmtai.herokuapp.com/v2/'
 
-    async def fetch_image(self, type: str) -> str:
-        data = await self.request(type)
+    async def fetch_image(self, category: str) -> str:
+        data = await self.request(category)
         return data['url']
 
     async def fetch_categories(self) -> Dict[str, int]:

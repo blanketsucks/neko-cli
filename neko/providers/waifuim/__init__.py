@@ -19,14 +19,14 @@ class WaifuimProvider(CachableProvider[WaifuimImage]):
         super().__init__(session, extras=extras)
         self.nsfw: bool = extras.pop('nsfw', False)
 
-    async def request(self, type: str, **params: Any) -> Dict[str, Any]:
-        params['selected_tags'] = type
+    async def request(self, category: str, **params: Any) -> Dict[str, Any]:
+        params['selected_tags'] = category
         params.setdefault('is_nsfw', 'true' if self.nsfw else 'false')
 
         return await super().request('random', params=params)
 
-    async def _fetch_many(self, type: str) -> List[WaifuimImage]:
-        data = await self.request(type, many='true')
+    async def _fetch_many(self, category: str) -> List[WaifuimImage]:
+        data = await self.request(category, many='true')
         images: List[WaifuimImage] = []
 
         for payload in data['images']:
@@ -41,15 +41,15 @@ class WaifuimProvider(CachableProvider[WaifuimImage]):
 
         return images
 
-    async def fetch_image(self, type: str) -> str:
+    async def fetch_image(self, category: str) -> str:
         if not self._cache:
-            self._cache = await self._fetch_many(type)
+            self._cache = await self._fetch_many(category)
 
         image = self._cache.pop()
         return image.url
 
-    async def fetch_many(self, type: str) -> List[str]:
-        images = await self._fetch_many(type)
+    async def fetch_many(self, category: str) -> List[str]:
+        images = await self._fetch_many(category)
         return [image.url for image in images]
 
     async def fetch_categories(self) -> Dict[str, int]:

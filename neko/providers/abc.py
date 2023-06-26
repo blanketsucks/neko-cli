@@ -52,7 +52,7 @@ class Provider(ABC):
                 except KeyError:
                     retry_after = 60.0
 
-                logger.error('%r: Too many requests. Retrying in %f seconds.', retry_after)
+                logger.error('%r: Too many requests. Retrying in %f seconds.', url, retry_after)
 
                 await asyncio.sleep(retry_after)
                 return await self.request(route, **kwargs)

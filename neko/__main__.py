@@ -1,5 +1,6 @@
 import asyncio
 import argparse
+import sys
 
 from . import __version__
 from .main import main as amain
@@ -86,4 +87,4 @@ def main() -> int:
         return 1
 
 if __name__ == '__main__':
-    exit(main())
+    sys.exit(main())

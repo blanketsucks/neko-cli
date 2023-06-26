@@ -23,8 +23,8 @@ MEDIA_DISCORD_REGEX = re.compile(r'https:\/\/media\.discordapp\.net\/attachments
 class AkanekoProvider(Provider):
     BASE_URL = 'https://akaneko-api.herokuapp.com/api/'
 
-    async def fetch_image(self, type: str) -> str:
-        data = await self.request(type)
+    async def fetch_image(self, category: str) -> str:
+        data = await self.request(category)
         return data['url']
 
     async def fetch_categories(self) -> Dict[str, int]:

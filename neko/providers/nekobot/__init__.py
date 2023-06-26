@@ -7,8 +7,8 @@ from neko.providers.providers import register
 class NekobotProvider(Provider):
     BASE_URL = 'https://nekobot.xyz/api/image'
 
-    async def fetch_image(self, type: str) -> str:
-        params = {'type': type}
+    async def fetch_image(self, category: str) -> str:
+        params = {'type': category}
         data = await self.request(params=params)
 
         return data['message']

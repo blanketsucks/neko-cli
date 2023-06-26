@@ -1,4 +1,4 @@
-from typing import List, Set, Any, Dict, Optional, TextIO
+from typing import Set, Any, Dict, TextIO
 
 import aiohttp
 import pathlib
@@ -7,11 +7,12 @@ import asyncio
 import toml
 import json
 import logging
+import sys
 
 from . import __version__
 from .downloader import Downloader
 from .providers import ALL_PROVIDERS, get_providers_that_require_extras
-from .utils import Colors, chunk as _chunk, format_exception, get_input
+from .utils import Colors, chunk as _chunk, get_input
 from .viewer import Application as ImageViewer
 from .log import create_logger
 
@@ -59,14 +60,14 @@ def parse_extras(file: TextIO, provider: str) -> Dict[str, Any]:
         return json.load(file)
     elif path.suffix != '.toml':
         print(f'{Colors.red}- Invalid file extension {path.suffix!r}. Supported file extensions are \'.json\' and \'.toml\'{Colors.reset}')
-        exit(1)
+        sys.exit(1)
     
     data = toml.load(file)['provider']
     extras = data.get(provider, {})
 
     if not extras and provider in REQUIRE_EXTRAS:
         print(f'{Colors.red}- Provider {provider!r} not found in {path.name!r}.{Colors.reset}')
-        exit(1)
+        sys.exit(1)
 
     return extras
 
