@@ -2,13 +2,18 @@ from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from abc import ABC, abstractmethod
 import aiohttp
+import logging
 import asyncio
 
 from neko.utils import Colors
 
+logger = logging.getLogger('neko')
+
 T = TypeVar('T')
 
 class Provider(ABC):
+    EXTRA_DOWNLOAD_HEADERS: Dict[str, str] = {}
+    REQUIRES_EXTRAS: bool = False
     BASE_URL: str
 
     def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
@@ -16,7 +21,10 @@ class Provider(ABC):
         self.extras = extras
         self.debug = debug
 
-    async def request(self, route: Optional[str] = None, **kwargs: Any) -> Dict[str, Any]:
+    def finalize(self) -> None:
+        return 
+
+    async def request(self, route: Optional[str] = None, **kwargs: Any) -> Any:
         """
         Requests the given route with the given kwargs.
 
@@ -40,15 +48,22 @@ class Provider(ABC):
         kwargs.setdefault('method', 'GET')
         async with self.session.request(url=url, **kwargs) as response:
             if response.status == 429:
-                retry_after = float(response.headers['Retry-After'])
+                try:
+                    retry_after = float(response.headers['Retry-After'])
+                except KeyError:
+                    retry_after = 60.0
 
-                if self.debug:
-                    print(f'{Colors.red}- Too many requests. Retrying in {retry_after} seconds.{Colors.reset}')
+                logger.error(f'{url!r}: Too many requests. Retrying in {retry_after} seconds.')
 
                 await asyncio.sleep(retry_after)
                 return await self.request(route, **kwargs)
 
-            response.raise_for_status()
+            if response.status != 200:
+                if self.debug:
+                    print(f'{Colors.red}- {url!r}: {response.status} {response.reason}{Colors.reset}')
+
+                return {}
+
             return await response.json()
 
         return {}
@@ -91,8 +106,6 @@ class Provider(ABC):
             image = await self.fetch_image(category)
             images.append(image)
 
-            await asyncio.sleep(0.5) # Sleep for a bit to avoid ratelimits as much as possible
-
         return images
 
     @abstractmethod
@@ -125,7 +138,6 @@ class Provider(ABC):
         return url.split('/')[-1]
 
 class CachableProvider(Provider, Generic[T]):
-
     def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
         super().__init__(session, extras=extras, debug=debug)
         self._cache: List[T] = []

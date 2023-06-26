@@ -1,11 +1,15 @@
 from typing import List, Dict, Any, Optional, NamedTuple
 
 import aiohttp
+import logging
 import re
 
 from neko.providers.abc import CachableProvider
 from neko.providers.utils import get_str_value
+from neko.providers.providers import register
 from neko.utils import Colors
+
+logger = logging.getLogger('neko')
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
 REDDIT_GALLERY_REGEX = re.compile(r'https:\/\/www\.reddit\.com\/gallery\/.+')
@@ -14,12 +18,14 @@ class RedditImage(NamedTuple):
     url: str
     name: str
 
+@register('reddit')
 class RedditProvider(CachableProvider[RedditImage]):
     BASE_URL = 'https://reddit.com/'
+    REQUIRES_EXTRAS: bool = True
 
-    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
+    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any]):
         extras.pop('nsfw')
-        super().__init__(session, extras=extras, debug=debug)
+        super().__init__(session, extras=extras)
 
         self.subreddit = get_str_value(extras, 'subreddit')
 
@@ -34,7 +40,9 @@ class RedditProvider(CachableProvider[RedditImage]):
         self.last: Optional[str] = None 
     
         limit: int = self.extras.pop('limit', 30)
+
         self.extras['limit'] = max(limit, 100)
+        self.extras['count'] = 0
 
     async def _fetch_many(self) -> List[RedditImage]:
         params: Dict[str, Any] = self.extras.copy()
@@ -42,18 +50,19 @@ class RedditProvider(CachableProvider[RedditImage]):
             params['after'] = self.last
 
         route = f'r/{self.subreddit}/{self.sort}/.json'
+        
         data = await self.request(route, params=params)
+        self.last = data['data']['after']
 
         images: List[RedditImage] = []
-
         for child in data['data']['children']:
-            post = child['data']
+            post: Dict[str, Any] = child['data']
             if post['is_self']:
                 continue
             
             url, name = post['url'], post['name']
             if post.get('is_gallery', False):
-                images += await self._fetch_gallery_items(url, name)
+                images.extend(await self._fetch_gallery_items(url, name))
             else:
                 images.append(RedditImage(url, name))
 
@@ -64,18 +73,15 @@ class RedditProvider(CachableProvider[RedditImage]):
     async def _fetch_gallery_items(self, url: str, name: str) -> List[RedditImage]:
         match = REDDIT_GALLERY_REGEX.match(url)
         if not match:
-            if self.debug:
-                print(f'{Colors.white}- {name}{Colors.reset}: {Colors.red}{url!r} is not a valid Reddit gallery URL. Skipping.{Colors.reset}')
-
+            logger.warning(f'{url!r} is not a valid Reddit gallery URL. Skipping.')
             return []
 
         new_url = url.replace('gallery', 'comments') + '.json'
         async with self.session.get(new_url) as response:
             data = await response.json()
+            medias: Dict[str, Any] = data[0]['data']['children'][0]['data']['media_metadata']
 
             images: List[RedditImage] = []
-
-            medias = data[0]['data']['children'][0]['data']['media_metadata']
             for id, metadata in medias.items():
                 if metadata['status'] != 'valid':
                     continue
@@ -84,8 +90,6 @@ class RedditProvider(CachableProvider[RedditImage]):
                 images.append(RedditImage(f'https://i.redd.it/{id}.{extension}', name))
 
             return images
-        
-        return []
 
     async def fetch_image(self, _: str = '') -> str:
         if not self._cache:

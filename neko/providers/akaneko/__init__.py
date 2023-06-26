@@ -5,6 +5,7 @@ import hashlib
 import urllib.parse
 
 from neko.providers.abc import Provider
+from neko.providers.providers import register
 
 AKANEKO_CATEGORIES = (
     'ass', 'bdsm', 'bondage', 'cum', 'hentai', 'femdom',
@@ -18,6 +19,7 @@ AKANEKO_CATEGORIES = (
 
 MEDIA_DISCORD_REGEX = re.compile(r'https:\/\/media\.discordapp\.net\/attachments\/(?P<channel_id>\d+)\/(?P<message_id>\d+)\/(?P<filename>[^?]*)')
 
+@register('akaneko')
 class AkanekoProvider(Provider):
     BASE_URL = 'https://akaneko-api.herokuapp.com/api/'
 

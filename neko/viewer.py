@@ -7,6 +7,7 @@ from tkinter import simpledialog
 from itertools import count
 from enum import Enum
 import argparse
+import logging
 import random
 import tkinter
 import pathlib
@@ -15,8 +16,63 @@ import math
 class Colors(str, Enum):
     red = '\u001b[1;31m'
     green = '\u001b[1;32m'
+    yellow = '\u001b[1;33m'
     white = '\u001b[1;37m'
     reset = '\u001b[0m'
+
+class ColorFormatter(logging.Formatter):
+    LEVELS: List[Tuple[int, Colors]] = [
+        (logging.INFO, Colors.green),
+        (logging.WARNING, Colors.yellow),
+        (logging.ERROR, Colors.red),
+        (logging.CRITICAL, Colors.red)
+    ]
+
+    FORMATS = {
+        level: logging.Formatter(f'{color}[%(levelname)s]{Colors.reset} %(message)s')
+        for level, color in LEVELS
+    }
+
+    def format(self, record: logging.LogRecord):
+        formatter = self.FORMATS.get(record.levelno)
+        if formatter is None:
+            formatter = self.FORMATS[logging.INFO]
+
+        if record.exc_info:
+            text = formatter.formatException(record.exc_info)
+            record.exc_text = f'{Colors.red}{text}{Colors.reset}'
+
+        output = formatter.format(record)
+        record.exc_text = None
+
+        return output
+
+def create_logger():
+    logger = logging.getLogger('neko.viewer')
+    logger.setLevel(logging.INFO)
+
+    handler = logging.StreamHandler()
+    handler.setFormatter(ColorFormatter())
+
+    logger.addHandler(handler)
+    return logger
+
+logger = create_logger()
+
+def _sort(image: str) -> Any:
+    image, _ = image.split('.')
+    if '_' in image:
+        image, page = image.split('_')
+        if 'p' in page:
+            _, page = page.split('p')
+            print(page)
+
+        return int(image) if image.isdigit() else image, int(page) if page.isdigit() else page
+
+    if not image.isdigit():
+        return (image, 0)
+    
+    return (int(image), 0)
 
 # From https://stackoverflow.com/a/43770948
 class ImageLabel(tkinter.Label):
@@ -68,13 +124,12 @@ class Application(tkinter.Tk):
         duration: int = 1, 
         width: int = 720,
         height: int = 720,
-        debug: bool = False,
         **kwargs: Any
     ) -> None:
         super().__init__(*args, **kwargs)
+
         self.height = height
         self.width = width
-        self.debug = debug
 
         if not paths:
             self.images: List[Tuple[Image.Image, str]] = []
@@ -84,8 +139,9 @@ class Application(tkinter.Tk):
         self.duration = duration
         self.index = -1
         self.last_index = 0
-        self.slideshow: Optional[str] = None
+        self.slideshow_id: Optional[str] = None
         self.current_image: Optional[Image.Image] = None
+        self.is_fullscreen = False
 
         self.title('Image viewer')
         self.geometry(f'{self.width}x{self.height}')
@@ -96,9 +152,6 @@ class Application(tkinter.Tk):
         self.setup_menu()
         self.setup_keybinds()
 
-    def _destroy(self, *args: Any) -> None:
-        self.destroy()
-
     def setup_menu(self):
         root = tkinter.Menu(self)
         self.config(menu=root)
@@ -106,7 +159,7 @@ class Application(tkinter.Tk):
         root.add_command(label='Quit', command=self.destroy, accelerator='Ctrl+Q')
         root.add_command(label='Next', command=self.next, accelerator='Right')
         root.add_command(label='Previous', command=self.previous, accelerator='Left')
-        root.add_command(label='Slideshow', command=self.start_slideshow, accelerator='Space')
+        root.add_command(label='Slideshow', command=self.slideshow, accelerator='Space')
         root.add_command(label='Shuffle', command=self.shuffle, accelerator='Ctrl+S')
         root.add_command(label='Random', command=self.random, accelerator='Ctrl+R')
         root.add_command(label='Back', command=self.back, accelerator='Ctrl+B')
@@ -115,43 +168,35 @@ class Application(tkinter.Tk):
     def setup_keybinds(self):
         self.bind('<Right>', self.next)
         self.bind('<Left>', self.previous)
-        self.bind('<Escape>', self._destroy)
-        self.bind('<space>', self.start_slideshow)
+        self.bind('<Escape>', self.destroy)
+        self.bind('<space>', self.slideshow)
         self.bind('<Control-s>', self.shuffle)
         self.bind('<Control-r>', self.random)
         self.bind('<Control-b>', self.back)
         self.bind('<Control-g>', self.goto)
-        self.bind('<Control-q>', self._destroy)
+        self.bind('<Control-q>', self.destroy)
+        self.bind('<F11>', self.fullscreen)
 
     def open_image(self, path: pathlib.Path) -> Tuple[Image.Image, str]:
-        image = self.resize(Image.open(path), path.name)
-        return image, path.name
+        return self.resize(Image.open(path), path.name), path.name
 
     def load_images(self, paths: List[pathlib.Path]) -> List[Tuple[Image.Image, str]]:
         images: List[Tuple[Image.Image, str]] = []
         failed = 0
 
-        for path in paths:
-            for image in path.iterdir():
-                if image.is_file():
-                    try:
-                        images.append(self.open_image(image))
-                    except UnidentifiedImageError:
-                        if self.debug:
-                            fmt = f'{Colors.white}- {image.name}{Colors.reset}: {Colors.red}Error while loading.{Colors.reset}'
-                            print(fmt)
-                        
-                        failed += 1
-                    else:
-                        if self.debug:
-                            fmt = f'{Colors.white}- {image.name}{Colors.reset}: {Colors.green}Loaded.{Colors.reset}'
-                            print(fmt)
+        for dir in paths:
+            for file in dir.iterdir():
+                try:
+                    image = self.resize(Image.open(file), file.name)
+                    images.append((image, file.name))
+                except UnidentifiedImageError:
+                    logger.error(f'Error while loading {file.name!r}.')
+                    failed += 1
+                else:
+                    logger.info(f'Loaded {file.name!r} with size {image.width}x{image.height}.')
 
-        if self.debug:
-            length = len(images)
-            print(f'\n{Colors.white}- Loaded {length-failed}/{length} images.{Colors.reset}')
-
-        return images
+        logger.info(f'Loaded {len(images) - failed}/{len(images)} images.')
+        return sorted(images, key=lambda image: _sort(image[1]))
 
     def resize(
         self, 
@@ -174,9 +219,6 @@ class Application(tkinter.Tk):
             height = max_height
             width = math.ceil(width * ratio)
 
-        if self.debug:
-            print(f'{Colors.white}- {name}{Colors.reset}: {Colors.green}Resized to {width}x{height}.{Colors.reset}')
-        
         if image.format == 'GIF':
             for frame in ImageSequence.Iterator(image):
                 frame.resize((width, height))
@@ -189,10 +231,19 @@ class Application(tkinter.Tk):
         self.current_image = image
         self.slide.load(image, self.width, self.height)
 
+    def fullscreen(self, *args: Any) -> None:
+        if self.is_fullscreen:
+            self.attributes('-fullscreen', False)
+            self.is_fullscreen = False
+        else:
+            self.attributes('-fullscreen', True)
+            self.is_fullscreen = True
+
     def show(self, image: Image.Image, name: str):
         self.slide.unload()
         self.set_image(image)
 
+        logger.info(f'Showing {name!r}')
         self.title(f'{name} | ({self.index + 1}/{len(self.images)})')
 
     def next(self, *args: Any) -> None:
@@ -218,14 +269,14 @@ class Application(tkinter.Tk):
 
     def _run_slideshow(self):
         self.next()
-        self.slideshow = self.after(self.duration * 1000, self._run_slideshow)
+        self.slideshow_id = self.after(self.duration * 1000, self._run_slideshow)
 
-    def start_slideshow(self, *args: Any) -> None:
-        if self.slideshow is None:
+    def slideshow(self, *args: Any) -> None:
+        if self.slideshow_id is None:
             self._run_slideshow()
         else:
-            self.after_cancel(self.slideshow)
-            self.slideshow = None
+            self.after_cancel(self.slideshow_id)
+            self.slideshow_id = None
 
     def shuffle(self, *args: Any) -> None:
         random.shuffle(self.images)
@@ -258,19 +309,45 @@ class Application(tkinter.Tk):
 
         self.show(image, name)
 
+    def destroy(self, *args: Any) -> None:
+        if self.is_fullscreen:
+            self.attributes('-fullscreen', False)
+            self.is_fullscreen = False
+        else:
+            super().destroy()
+
     def run(self):
         self.mainloop()
 
 def main():
     parser = argparse.ArgumentParser(description='An Image viewer.')
 
-    parser.add_argument('--path', type=str, help='Path to the directory containing the images.', default='./images')
-    parser.add_argument('--width', type=int, help='Width of the window. Defaults to 720. Images are resized according to this argument.', default=720)
-    parser.add_argument('--height', type=int, help='Height of the window. Defaults to 720. Images are resized according to this argument.', default=720)
+    parser.add_argument(
+        'path', type=str, help='Path to the directory containing the images.'
+    )
+
+    parser.add_argument(
+        '--width', 
+        type=int, 
+        help='Width of the window. Defaults to 720. Images are resized according to this argument.', 
+        default=720
+    )
+
+    parser.add_argument(
+        '--height', 
+        type=int, 
+        help='Height of the window. Defaults to 720. Images are resized according to this argument.', 
+        default=720
+    )
+
     parser.add_argument('--debug', action='store_true', help='Print debug messages.', default=False)
 
     args = parser.parse_args()
-    app = Application(width=args.width, height=args.height, paths=[args.path], debug=args.debug)
+
+    if not args.debug:
+        logger.setLevel(logging.ERROR)
+
+    app = Application(width=args.width, height=args.height, paths=[args.path])
 
     app.run()
     return 0

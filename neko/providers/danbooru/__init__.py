@@ -4,6 +4,7 @@ import aiohttp
 
 from neko.providers.abc import CachableProvider
 from neko.providers.utils import get_str_value
+from neko.providers.providers import register
 
 REQUEST_ROUTES: Dict[str, str] = {
     'popular': 'explore/posts/popular.json',
@@ -29,11 +30,13 @@ class DanbooruImage(NamedTuple):
     file: DanbooruFile
     tags: List[str]
 
+@register('danbooru')
 class DanbooruProvider(CachableProvider[DanbooruImage]):
     BASE_URL = 'https://danbooru.donmai.us/'
+    REQUIRES_EXTRAS = True
 
-    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
-        super().__init__(session, extras=extras, debug=debug)
+    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any]):
+        super().__init__(session, extras=extras)
 
         self.params: Dict[str, Any] = {}
 
@@ -92,20 +95,20 @@ class DanbooruProvider(CachableProvider[DanbooruImage]):
 
     async def _fetch_many(self) -> List[DanbooruImage]:
         route = self.get_request_route()
-        payload: List[Dict[str, Any]] = await self.request(route, **self.params)
+        payload: List[Dict[str, Any]] = await self.request(route, auth=self.auth, params=self.params)
 
         images: List[DanbooruImage] = []
 
         for data in payload:
+            if 'file_url' not in data:
+                continue
+
             file = DanbooruFile(extension=data['file_ext'], size=data['file_size'], url=data['file_url'])
             image = DanbooruImage(md5=data['md5'], source=data['source'], file=file, tags=data['tag_string_general'].split(' '))
 
             images.append(image)
 
         return images
-
-    async def request(self, route: str, **params: Any) -> Any:
-        return await super().request(route, auth=self.auth, params=params)
 
     def get_request_route(self) -> str:
         return REQUEST_ROUTES.get(self.sort_by, 'posts.json') # type: ignore

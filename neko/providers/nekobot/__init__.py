@@ -1,7 +1,9 @@
 from typing import Dict
 
 from neko.providers.abc import Provider
+from neko.providers.providers import register
 
+@register('nekobot')
 class NekobotProvider(Provider):
     BASE_URL = 'https://nekobot.xyz/api/image'
 

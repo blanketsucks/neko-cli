@@ -3,12 +3,14 @@ from typing import Dict, List, Any
 import aiohttp
 
 from neko.providers.abc import CachableProvider
+from neko.providers.providers import register
 
+@register('waifu.pics')
 class WaifupicsProvider(CachableProvider[str]):
     BASE_URL = 'https://api.waifu.pics/'
 
-    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
-        super().__init__(session, extras=extras, debug=debug)
+    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any]):
+        super().__init__(session, extras=extras)
         self.nsfw: bool = extras.pop('nsfw', False)
 
     async def fetch_image(self, type: str) -> str:

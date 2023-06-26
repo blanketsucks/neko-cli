@@ -4,9 +4,11 @@ import hashlib
 import re
 
 from neko.providers.abc import Provider
+from neko.providers.providers import register
 
 DISCORD_CDN_REGEX = re.compile(r'https:\/\/cdn\.discordapp\.com\/attachments\/(?P<channel_id>\d+)\/(?P<message_id>\d+)\/(?P<filename>[^?]*)')
 
+@register('hmtai')
 class HmtaiProvider(Provider):
     BASE_URL = 'https://hmtai.herokuapp.com/v2/'
 

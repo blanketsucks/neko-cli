@@ -24,6 +24,9 @@ setup(
     entry_points={
         'console_scripts': ['neko-cli = neko.__main__:main', 'neko-viewer = neko.viewer:main'],
     },
+    extras_require={
+        'nhentai': ['undetected-chromedriver'], 'viewer': ['Pillow']
+    },
     python_requires='>=3.8',
     description='a NSFW/SFW image downloader.',
     long_description=description,

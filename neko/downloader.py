@@ -1,12 +1,15 @@
-from typing import Mapping, Tuple
+from typing import Mapping, Optional, Tuple, Dict
 
 import multidict
 import aiohttp
 import pathlib
 import asyncio
+import logging
 
 from .providers import Provider
 from .utils import Colors, format_exception
+
+logger = logging.getLogger('neko')
 
 VALID_EXTENSIONS: Tuple[str, ...] = (
     'jpg', 'jpeg', 'png', 'gif', 'webm', 'mp4'
@@ -17,27 +20,23 @@ def _transform_headers(headers: multidict.CIMultiDictProxy[str]) -> Mapping[str,
     return {key: value for key, value in headers.items()}
 
 class Downloader:
-    __slots__ = ('provider', 'path', 'debug')
+    __slots__ = ('provider', 'path', 'headers')
 
     def __init__(
         self, 
         provider: Provider,
         path: pathlib.Path,
         *,
-        debug: bool = False
+        headers: Optional[Dict[str, str]] = None,
     ) -> None:
         self.path = path
         self.provider = provider
-        self.debug = debug
+        self.headers = headers or {}
 
     @property
     def session(self) -> aiohttp.ClientSession:
         return self.provider.session
-
-    @property
-    def loop(self) -> asyncio.AbstractEventLoop:
-        return self.session.loop
-
+    
     def get_file_extension_from_header(self, content_type: str) -> str:
         """
         Parses the file extension from a Content-Type header.
@@ -62,6 +61,7 @@ class Downloader:
         extension: :class:`str`
             The extension of the file.
         """
+        extension = extension if extension.startswith('.') else f'.{extension}'
         return (self.path / identifier).with_suffix(extension)
 
     def has_extension(self, identifier: str) -> bool:
@@ -95,9 +95,12 @@ class Downloader:
 
         return path
 
-    def get_file_extension(self, identifier: str, headers: Mapping[str, str]):
+    def get_file_extension(self, identifier: str, headers: Mapping[str, str]) -> Optional[str]:
         if not self.has_extension(identifier):
-            return self.get_file_extension_from_header(headers['Content-Type'])
+            try:
+                return self.get_file_extension_from_header(headers['Content-Type'])
+            except KeyError:
+                return None
 
         return identifier.split('.')[-1]
 
@@ -113,7 +116,11 @@ class Downloader:
             The size of each chunk. Defaults to 1024.        
         """
         while True:
-            chunk = await response.content.read(size)
+            try:
+                chunk = await response.content.read(size)
+            except asyncio.TimeoutError:
+                chunk = await response.content.read(size) # retry the read
+            
             if not chunk:
                 break
 
@@ -138,20 +145,15 @@ class Downloader:
                 async for chunk in self.chunk(response):
                     file.write(chunk)
 
-            if self.debug:
-                fmt = f"{Colors.white}- {path.name}{Colors.reset}: {Colors.green}Successfully Downloaded.{Colors.reset}"
-                print(fmt)
+            logger.info(f'Successfully downloaded {path.name!r}')
         except Exception as e:
             tmp.unlink()
-            if self.debug:
-                exc = format_exception(e)
-
-                fmt = f"{Colors.white}- {path.name}{Colors.reset}: {Colors.red}Failed to download due to {exc!r}.{Colors.reset}"
-                print(fmt)
-            else:
-                raise e
+            logger.exception(f'Failed to download {path.name!r}', exc_info=e)
         else:
-            tmp.rename(path)
+            try:
+                tmp.rename(path)
+            except FileExistsError:
+                pass
 
     async def fetch_download_path(self, url: str) -> pathlib.Path:
         """
@@ -177,7 +179,7 @@ class Downloader:
         url: :class:`str`
             The URL of the file.
         """
-        async with self.session.head(url) as response:
+        async with self.session.head(url, headers=self.headers) as response:
             return _transform_headers(response.headers)
 
     async def download(self, url: str) -> bool:
@@ -190,22 +192,20 @@ class Downloader:
         url: :class:`str`
             The URL of the file.
         """
-        async with self.session.get(url) as response:
+        async with self.session.get(url, headers=self.headers) as response:
             identifier = self.provider.get_identifier_from_url(url)
             if response.status != 200:
-                if self.debug:
-                    fmt = f"{Colors.white}- {identifier}{Colors.reset}: {Colors.red}Failed to download with status code '{response.status}'.{Colors.reset}"
-                    print(fmt)
-
+                logger.error(f'Failed to download {identifier!r} with status code {response.status}')
                 return False
-
             
-            extension = self.get_file_extension(identifier, _transform_headers(response.headers))
+            try:
+                extension = self.get_file_extension(identifier, _transform_headers(response.headers))
+            except KeyError:
+                logger.error(f'Failed to download {identifier!r} with status code {response.status} (missing Content-Type header)')
+                return False
+            
             if extension not in VALID_EXTENSIONS:
-                if self.debug:
-                    fmt = f"{Colors.white}- {identifier}{Colors.reset}: {Colors.red}Unsupported file type '{extension}'.{Colors.reset}"
-                    print(fmt)
-
+                logger.error(f'Failed to download {identifier!r} with status code {response.status} (invalid extension {extension!r})')
                 return False
 
             path = self.get_download_path_from_headers(identifier, _transform_headers(response.headers))

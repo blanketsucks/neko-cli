@@ -1,6 +1,9 @@
 __pycache__
 images/
+
 extras.json
+extras.toml
+
 legacy.py
 clear.py
 test

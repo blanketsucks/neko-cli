@@ -3,6 +3,7 @@ from typing import Any, Dict, List, NamedTuple
 import aiohttp
 
 from neko.providers.abc import CachableProvider
+from neko.providers.providers import register
 
 class WaifuimImage(NamedTuple):
     file: str
@@ -10,11 +11,12 @@ class WaifuimImage(NamedTuple):
     source: str
     url: str
 
+@register('waifu.im')
 class WaifuimProvider(CachableProvider[WaifuimImage]):
     BASE_URL = 'https://api.waifu.im/'
 
-    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any], debug: bool = False):
-        super().__init__(session, extras=extras, debug=debug)
+    def __init__(self, session: aiohttp.ClientSession, *, extras: Dict[str, Any]):
+        super().__init__(session, extras=extras)
         self.nsfw: bool = extras.pop('nsfw', False)
 
     async def request(self, type: str, **params: Any) -> Dict[str, Any]:
